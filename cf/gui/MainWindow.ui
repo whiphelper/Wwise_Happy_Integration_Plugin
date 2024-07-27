@@ -1,0 +1,1341 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1280</width>
+    <height>720</height>
+   </rect>
+  </property>
+  <property name="font">
+   <font>
+    <family>Courier New</family>
+   </font>
+  </property>
+  <property name="windowTitle">
+   <string>WHIP</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="verticalLayout_2">
+    <item>
+     <layout class="QVBoxLayout" name="verticalLayout" stretch="0,0,0,1">
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <item>
+         <widget class="QPushButton" name="pushButton_Save">
+          <property name="minimumSize">
+           <size>
+            <width>30</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>30</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_UndoRedo">
+          <property name="minimumSize">
+           <size>
+            <width>40</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>40</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="font">
+           <font>
+            <family>Courier New</family>
+            <pointsize>7</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_2">
+          <property name="minimumSize">
+           <size>
+            <width>30</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>30</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_3">
+          <property name="minimumSize">
+           <size>
+            <width>30</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>30</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_4">
+          <property name="minimumSize">
+           <size>
+            <width>30</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>30</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_5">
+          <property name="minimumSize">
+           <size>
+            <width>30</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>30</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeType">
+           <enum>QSizePolicy::Expanding</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QFrame" name="Frame_Filter">
+          <layout class="QHBoxLayout" name="horizontalLayout_Filter">
+           <property name="spacing">
+            <number>0</number>
+           </property>
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLineEdit" name="lineEdit_Find">
+          <property name="minimumSize">
+           <size>
+            <width>200</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>200</width>
+            <height>30</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButton_Find">
+          <property name="minimumSize">
+           <size>
+            <width>30</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>30</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_Find">
+          <property name="minimumSize">
+           <size>
+            <width>40</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>40</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="font">
+           <font>
+            <family>Courier New</family>
+            <pointsize>7</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_2">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButton_GO">
+          <property name="minimumSize">
+           <size>
+            <width>30</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>30</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label">
+          <property name="minimumSize">
+           <size>
+            <width>30</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>30</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButton_ExpandSwitch">
+          <property name="minimumSize">
+           <size>
+            <width>30</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>30</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButton_MirrorID">
+          <property name="minimumSize">
+           <size>
+            <width>30</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>30</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButton_Recreate">
+          <property name="minimumSize">
+           <size>
+            <width>30</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>30</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <widget class="QProgressBar" name="progressBar">
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>5</height>
+         </size>
+        </property>
+        <property name="value">
+         <number>0</number>
+        </property>
+        <property name="textVisible">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QVBoxLayout" name="verticalLayout_2by2">
+        <item>
+         <widget class="QTableWidget" name="tableWidget_SoundSheet">
+          <property name="font">
+           <font>
+            <family>Courier New</family>
+           </font>
+          </property>
+          <property name="contextMenuPolicy">
+           <enum>Qt::CustomContextMenu</enum>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">gridline-color: rgb(90, 90, 90);</string>
+          </property>
+          <property name="editTriggers">
+           <set>QAbstractItemView::DoubleClicked</set>
+          </property>
+          <attribute name="verticalHeaderMinimumSectionSize">
+           <number>20</number>
+          </attribute>
+          <attribute name="verticalHeaderDefaultSectionSize">
+           <number>20</number>
+          </attribute>
+          <column>
+           <property name="text">
+            <string>ID</string>
+           </property>
+           <property name="font">
+            <font>
+             <family>Courier New</family>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>Notes</string>
+           </property>
+           <property name="font">
+            <font>
+             <family>Courier New</family>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>EventName</string>
+           </property>
+           <property name="font">
+            <font>
+             <family>Courier New</family>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>BankName</string>
+           </property>
+           <property name="font">
+            <font>
+             <family>Courier New</family>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>KeyStr</string>
+           </property>
+           <property name="font">
+            <font>
+             <family>Courier New</family>
+             <weight>75</weight>
+             <italic>false</italic>
+             <bold>true</bold>
+             <underline>true</underline>
+            </font>
+           </property>
+           <property name="foreground">
+            <brush brushstyle="SolidPattern">
+             <color alpha="255">
+              <red>0</red>
+              <green>0</green>
+              <blue>0</blue>
+             </color>
+            </brush>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>BodyStr</string>
+           </property>
+           <property name="font">
+            <font>
+             <family>Courier New</family>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>TailStr</string>
+           </property>
+           <property name="font">
+            <font>
+             <family>Courier New</family>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>RDM</string>
+           </property>
+           <property name="font">
+            <font>
+             <family>Courier New</family>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>Lock</string>
+           </property>
+           <property name="font">
+            <font>
+             <family>Courier New</family>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+           <property name="foreground">
+            <brush brushstyle="SolidPattern">
+             <color alpha="255">
+              <red>118</red>
+              <green>118</green>
+              <blue>118</blue>
+             </color>
+            </brush>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>MirrorFrom</string>
+           </property>
+           <property name="font">
+            <font>
+             <family>Courier New</family>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+           <property name="foreground">
+            <brush brushstyle="SolidPattern">
+             <color alpha="255">
+              <red>118</red>
+              <green>118</green>
+              <blue>118</blue>
+             </color>
+            </brush>
+           </property>
+          </column>
+         </widget>
+        </item>
+        <item>
+         <widget class="QTextEdit" name="textEdit_Log">
+          <property name="contextMenuPolicy">
+           <enum>Qt::CustomContextMenu</enum>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <widget class="QFrame" name="Frame_AdvInfo">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>150</height>
+         </size>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_7">
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_2">
+           <item>
+            <widget class="QLabel" name="label_EventObjectRefCountTag">
+             <property name="text">
+              <string>Event ObjectRef Count:</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_EventObjectRefCount">
+             <property name="minimumSize">
+              <size>
+               <width>10</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>0</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QComboBox" name="comboBox_EventObjectRef">
+             <property name="minimumSize">
+              <size>
+               <width>300</width>
+               <height>0</height>
+              </size>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer_7">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_RelatedWAVCountTag">
+             <property name="text">
+              <string>Related WAV Count:</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_RelatedWAVCount">
+             <property name="minimumSize">
+              <size>
+               <width>10</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>0</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QComboBox" name="comboBox_RelatedWAV">
+             <property name="minimumSize">
+              <size>
+               <width>500</width>
+               <height>0</height>
+              </size>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer_9">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pushButton_LocateWAV">
+             <property name="text">
+              <string>Locate WAV</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="QFrame" name="Frame_Wavform">
+           <property name="frameShape">
+            <enum>QFrame::StyledPanel</enum>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Raised</enum>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <widget class="QGroupBox" name="groupBox_Preference">
+      <property name="title">
+       <string>Preference</string>
+      </property>
+      <layout class="QGridLayout" name="gridLayout_2">
+       <item row="0" column="0">
+        <layout class="QGridLayout" name="gridLayout">
+         <item row="11" column="0">
+          <widget class="QLabel" name="label_AutoGenerateBanks">
+           <property name="text">
+            <string>Auto Generate Banks</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="1">
+          <spacer name="horizontalSpacer_6">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item row="0" column="1">
+          <widget class="QComboBox" name="comboBox_Language">
+           <item>
+            <property name="text">
+             <string>简体中文</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>English</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="8" column="0">
+          <layout class="QHBoxLayout" name="horizontalLayout_3">
+           <property name="spacing">
+            <number>6</number>
+           </property>
+           <property name="sizeConstraint">
+            <enum>QLayout::SetDefaultConstraint</enum>
+           </property>
+           <item>
+            <widget class="QLabel" name="label_AutoSaveAs_Head">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>Auto Save As Every</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QSpinBox" name="spinBox_AutoSaveAs">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>40</width>
+               <height>16777215</height>
+              </size>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_AutoSaveAs_Tail">
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>Min(s)</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer_10">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </item>
+         <item row="13" column="0">
+          <widget class="QLabel" name="label_LogDisplayLevel">
+           <property name="text">
+            <string>Log Display Level</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="2">
+          <spacer name="horizontalSpacer_4">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item row="11" column="1">
+          <widget class="QComboBox" name="comboBox_AutoGenerateBanks">
+           <item>
+            <property name="text">
+             <string>Yes</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>No</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="0" column="2">
+          <widget class="QLabel" name="label_LanguageHint">
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </item>
+         <item row="6" column="1">
+          <widget class="QComboBox" name="comboBox_CopyPasteMode">
+           <item>
+            <property name="text">
+             <string>Text (Only)</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Text and Background Color</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Background Color (Only)</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="13" column="1">
+          <widget class="QComboBox" name="comboBox_LogDisplayLevel"/>
+         </item>
+         <item row="6" column="0">
+          <widget class="QLabel" name="label_CopyPasteMode">
+           <property name="text">
+            <string>Copy/Paste/Clear Mode</string>
+           </property>
+          </widget>
+         </item>
+         <item row="13" column="5">
+          <widget class="QPushButton" name="pushButton_QuickTest">
+           <property name="text">
+            <string>^_^</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="4">
+          <spacer name="horizontalSpacer_12">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item row="4" column="3">
+          <spacer name="horizontalSpacer_11">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item row="4" column="1">
+          <widget class="QComboBox" name="comboBox_AutoLoadSoundSheetWhenStart">
+           <item>
+            <property name="text">
+             <string>Yes</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Never</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="12" column="1">
+          <widget class="QComboBox" name="comboBox_AutoColorForEventsNotInTable">
+           <item>
+            <property name="text">
+             <string>Yes</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Never</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="1" column="2">
+          <spacer name="horizontalSpacer_8">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_ShowWelcomePageWhenStart">
+           <property name="text">
+            <string>Show Welcome Page on startup</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="0">
+          <widget class="QLabel" name="label_AutoLoadSoundSheetWhenStart">
+           <property name="text">
+            <string>Auto Load SoundList When Start</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_Language">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>Language</string>
+           </property>
+          </widget>
+         </item>
+         <item row="10" column="0">
+          <spacer name="horizontalSpacer_14">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item row="4" column="5">
+          <spacer name="horizontalSpacer_13">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item row="4" column="2">
+          <spacer name="horizontalSpacer_5">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item row="8" column="1">
+          <widget class="QComboBox" name="comboBox_AutoSaveAs">
+           <item>
+            <property name="text">
+             <string>Yes</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Never</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QComboBox" name="comboBox_ShowWelcomePageWhenStart">
+           <item>
+            <property name="text">
+             <string>Never</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Yes</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="12" column="0">
+          <widget class="QLabel" name="label_AutoColorForEventsNotInTable">
+           <property name="text">
+            <string>Auto Color for Events not in Table</string>
+           </property>
+          </widget>
+         </item>
+         <item row="8" column="2">
+          <widget class="QLabel" name="label_AutoSaveAs">
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="0">
+          <widget class="QLabel" name="label_SaveAsDefaultFolderPath">
+           <property name="text">
+            <string>Export SoundList For Engine</string>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="1">
+          <widget class="QLineEdit" name="lineEdit_SaveAsDefaultFolderPath"/>
+         </item>
+         <item row="5" column="2">
+          <widget class="QPushButton" name="pushButton_SaveAsDefaultFolderPath">
+           <property name="maximumSize">
+            <size>
+             <width>60</width>
+             <height>30</height>
+            </size>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+      </layout>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1280</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menu_File">
+    <property name="font">
+     <font>
+      <family>Courier New</family>
+     </font>
+    </property>
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="action_Load"/>
+    <addaction name="action_ExportSoundList"/>
+    <addaction name="separator"/>
+    <addaction name="action_Save"/>
+    <addaction name="action_SaveAsJson"/>
+    <addaction name="action_SaveAsXlsx"/>
+    <addaction name="separator"/>
+    <addaction name="action_TransferXlsxIntoJson"/>
+    <addaction name="separator"/>
+    <addaction name="action_ShowHide_Filter"/>
+    <addaction name="action_ShowHide_Console"/>
+    <addaction name="separator"/>
+    <addaction name="action_ShowHide_Waveform"/>
+    <addaction name="action_ShowHide_Preference"/>
+    <addaction name="separator"/>
+    <addaction name="action_ShowHide_NamingArea"/>
+   </widget>
+   <widget class="QMenu" name="menu_Edit">
+    <property name="font">
+     <font>
+      <family>Courier New</family>
+     </font>
+    </property>
+    <property name="title">
+     <string>Edit</string>
+    </property>
+    <addaction name="action_Undo"/>
+    <addaction name="action_Redo"/>
+    <addaction name="separator"/>
+    <addaction name="action_AddLine"/>
+    <addaction name="action_DeleteLine"/>
+    <addaction name="separator"/>
+    <addaction name="action_Copy"/>
+    <addaction name="action_Paste"/>
+    <addaction name="action_Clear"/>
+   </widget>
+   <widget class="QMenu" name="menu_Help">
+    <property name="font">
+     <font>
+      <family>Courier New</family>
+     </font>
+    </property>
+    <property name="title">
+     <string>Help</string>
+    </property>
+    <addaction name="action_Document"/>
+    <addaction name="separator"/>
+    <addaction name="action_Disclaimer"/>
+    <addaction name="action_VersionInfo"/>
+    <addaction name="separator"/>
+    <addaction name="action_DevMode"/>
+   </widget>
+   <widget class="QMenu" name="menu_Wwise">
+    <property name="font">
+     <font>
+      <family>Courier New</family>
+     </font>
+    </property>
+    <property name="title">
+     <string>Wwise</string>
+    </property>
+    <addaction name="action_InitiateSession"/>
+    <addaction name="action_ConfigKeyInfo"/>
+    <addaction name="separator"/>
+    <addaction name="action_GlobalSafetyCheck"/>
+    <addaction name="action_RelinkMissingWAV"/>
+    <addaction name="separator"/>
+    <addaction name="action_GenerateProjectSheet"/>
+    <addaction name="separator"/>
+    <addaction name="action_OpenWwiseProjectFolder"/>
+   </widget>
+   <widget class="QMenu" name="menu_Engine">
+    <property name="font">
+     <font>
+      <family>Courier New</family>
+     </font>
+    </property>
+    <property name="title">
+     <string>Engine</string>
+    </property>
+    <addaction name="action_CheckSoundIDStatus"/>
+   </widget>
+   <addaction name="menu_File"/>
+   <addaction name="menu_Edit"/>
+   <addaction name="menu_Wwise"/>
+   <addaction name="menu_Engine"/>
+   <addaction name="menu_Help"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="action_Load">
+   <property name="text">
+    <string>Load SoundList</string>
+   </property>
+  </action>
+  <action name="action_Save">
+   <property name="text">
+    <string>Save</string>
+   </property>
+  </action>
+  <action name="action_SaveAsJson">
+   <property name="text">
+    <string>Save As .json</string>
+   </property>
+  </action>
+  <action name="action_ShowHide_Preference">
+   <property name="text">
+    <string>Show/Hide Preference</string>
+   </property>
+  </action>
+  <action name="action_AddLine">
+   <property name="text">
+    <string>Add Line</string>
+   </property>
+  </action>
+  <action name="action_DeleteLine">
+   <property name="text">
+    <string>Delete Line</string>
+   </property>
+  </action>
+  <action name="action_Undo">
+   <property name="text">
+    <string>Undo</string>
+   </property>
+  </action>
+  <action name="action_Redo">
+   <property name="text">
+    <string>Redo</string>
+   </property>
+  </action>
+  <action name="action_Copy">
+   <property name="text">
+    <string>Copy</string>
+   </property>
+  </action>
+  <action name="action_Paste">
+   <property name="text">
+    <string>Paste</string>
+   </property>
+  </action>
+  <action name="action_Document">
+   <property name="text">
+    <string>Document</string>
+   </property>
+  </action>
+  <action name="action_GlobalSafetyCheck">
+   <property name="text">
+    <string>Global Safety Check</string>
+   </property>
+  </action>
+  <action name="action_Clear">
+   <property name="text">
+    <string>Clear</string>
+   </property>
+  </action>
+  <action name="action_EditKeyInfo">
+   <property name="text">
+    <string>Edit Key Info</string>
+   </property>
+  </action>
+  <action name="action_InitiateSession">
+   <property name="text">
+    <string>Initiate Session</string>
+   </property>
+  </action>
+  <action name="action_GenerateProjectSheet">
+   <property name="text">
+    <string>Generate Project Sheet</string>
+   </property>
+  </action>
+  <action name="action_CheckSoundIDStatus">
+   <property name="text">
+    <string>Check SoundID Status</string>
+   </property>
+  </action>
+  <action name="action_SaveAsXlsx">
+   <property name="text">
+    <string>Save As .xlsx</string>
+   </property>
+  </action>
+  <action name="action_ShowHide_Console">
+   <property name="text">
+    <string>Show/Hide Console</string>
+   </property>
+  </action>
+  <action name="action_ShowHide_Filter">
+   <property name="text">
+    <string>Show/Hide Filter</string>
+   </property>
+  </action>
+  <action name="action_ShowHide_Waveform">
+   <property name="text">
+    <string>Show/Hide Waveform</string>
+   </property>
+  </action>
+  <action name="action_TransferXlsxIntoJson">
+   <property name="text">
+    <string>xlsx --&gt; json</string>
+   </property>
+  </action>
+  <action name="action_TransferJsonIntoXlsx">
+   <property name="text">
+    <string>json --&gt; xlsx</string>
+   </property>
+  </action>
+  <action name="action_OpenWwiseProjectFolder">
+   <property name="text">
+    <string>Open Wwise Project Folder</string>
+   </property>
+  </action>
+  <action name="action_RelinkMissingWAV">
+   <property name="text">
+    <string>Relink Missing WAV</string>
+   </property>
+  </action>
+  <action name="action_DevMode">
+   <property name="text">
+    <string>Dev Mode</string>
+   </property>
+  </action>
+  <action name="action_ShowHide_NamingArea">
+   <property name="text">
+    <string>Show/Hide Naming Area</string>
+   </property>
+  </action>
+  <action name="action_VersionInfo">
+   <property name="text">
+    <string>Version Info</string>
+   </property>
+  </action>
+  <action name="action_Disclaimer">
+   <property name="text">
+    <string>Disclaimer</string>
+   </property>
+  </action>
+  <action name="action_ConfigKeyInfo">
+   <property name="text">
+    <string>Config KeyInfo</string>
+   </property>
+  </action>
+  <action name="action_ExportSoundList">
+   <property name="text">
+    <string>Export SoundList</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

@@ -1,0 +1,12 @@
+
+__pycache__
+.idea
+main.spec
+dist
+build
+*.pyc
+__pycache__/Tools.cpython-39.pyc
+*.validationcache
+*.wsettings
+*.spec
+rec.log

@@ -1,0 +1,16 @@
+{
+    "version":2,
+    "commands":[
+		{
+            "id":"ak.Window_Welcome",
+            "displayName":"WHIP",
+            "defaultShortcut":"",
+            "program":"Launch.exe",
+            "args":"",
+            "cwd":"${WwiseUserAddons}\\Launch",
+            "mainMenu":{
+                    "basePath":"WHIP"
+                }
+        }
+    ]
+}

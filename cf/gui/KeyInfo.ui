@@ -1,0 +1,565 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="windowModality">
+   <enum>Qt::ApplicationModal</enum>
+  </property>
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1011</width>
+    <height>869</height>
+   </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>0</width>
+    <height>0</height>
+   </size>
+  </property>
+  <property name="font">
+   <font>
+    <family>Courier New</family>
+   </font>
+  </property>
+  <property name="windowTitle">
+   <string>KeyInfo</string>
+  </property>
+  <layout class="QHBoxLayout" name="horizontalLayout_2">
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,5">
+     <item>
+      <widget class="QListWidget" name="listWidget_KeyStrList">
+       <property name="minimumSize">
+        <size>
+         <width>100</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="contextMenuPolicy">
+        <enum>Qt::CustomContextMenu</enum>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <layout class="QVBoxLayout" name="verticalLayout" stretch="1,0,0,0,10">
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_4">
+         <item>
+          <widget class="QLineEdit" name="lineEdit_EditKeyStr">
+           <property name="minimumSize">
+            <size>
+             <width>150</width>
+             <height>30</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>500</width>
+             <height>30</height>
+            </size>
+           </property>
+           <property name="placeholderText">
+            <string>type in new KeyStr</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pushButton_AddKey">
+           <property name="minimumSize">
+            <size>
+             <width>30</width>
+             <height>30</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>30</width>
+             <height>30</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>+</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pushButton_AddKeyByMirror">
+           <property name="minimumSize">
+            <size>
+             <width>30</width>
+             <height>30</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>30</width>
+             <height>30</height>
+            </size>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_Log">
+           <property name="styleSheet">
+            <string notr="true">color: rgb(255, 0, 0);</string>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_5">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer_7">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="groupBox_Description">
+         <property name="title">
+          <string>GroupBox</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_3">
+          <item>
+           <widget class="QLabel" name="label_decription">
+            <property name="text">
+             <string/>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer_3">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="groupBox_UserDefinedGroup">
+         <property name="title">
+          <string>(User-Defined Group)</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_2">
+          <item>
+           <layout class="QGridLayout" name="gridLayout">
+            <item row="0" column="1">
+             <widget class="QLabel" name="label_StructureType">
+              <property name="font">
+               <font>
+                <family>Courier New</family>
+                <weight>50</weight>
+                <bold>false</bold>
+               </font>
+              </property>
+              <property name="text">
+               <string>Structure_Type (Presets)</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="25" column="2">
+             <spacer name="horizontalSpacer_4">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item row="9" column="1">
+             <widget class="QLabel" name="label_Path_InWwise_TargetBank">
+              <property name="text">
+               <string>Path_InWwise_TargetBank</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="13" column="1">
+             <widget class="QLabel" name="label_Property_Bus">
+              <property name="text">
+               <string>Property_Bus (Root)</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="19" column="1">
+             <widget class="QLabel" name="label_Property_SwitchGroupName_Texture">
+              <property name="text">
+               <string>Property_SwitchGroupName_Texture (3d)</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="18" column="2">
+             <widget class="QComboBox" name="comboBox_Property_SwitchGroupName_PC_NPC"/>
+            </item>
+            <item row="15" column="2">
+             <widget class="QLineEdit" name="lineEdit_Property_Bus_NPC"/>
+            </item>
+            <item row="3" column="2">
+             <widget class="QLineEdit" name="lineEdit_Path_File_PlaceholderWAV"/>
+            </item>
+            <item row="27" column="1">
+             <widget class="QLabel" name="label_Property_ifPitchRandom">
+              <property name="text">
+               <string>Property_ifPitchRandom (Root)</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="13" column="2">
+             <widget class="QLineEdit" name="lineEdit_Property_Bus"/>
+            </item>
+            <item row="23" column="2">
+             <widget class="QLineEdit" name="lineEdit_Property_Positioning"/>
+            </item>
+            <item row="8" column="1">
+             <widget class="QLabel" name="label_Path_InWwise_TargetEvent">
+              <property name="text">
+               <string>Path_InWwise_TargetEvent</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="19" column="2">
+             <widget class="QLineEdit" name="lineEdit_Property_SwitchGroupName_Texture"/>
+            </item>
+            <item row="2" column="2">
+             <spacer name="horizontalSpacer">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item row="7" column="1">
+             <widget class="QLabel" name="label_Path_InWwise_TargetActorMixer">
+              <property name="text">
+               <string>Path_InWwise_TargetActorMixer</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="14" column="2">
+             <widget class="QComboBox" name="comboBox_Property_Bus"/>
+            </item>
+            <item row="4" column="3">
+             <widget class="QPushButton" name="pushButton_Browse_Path_Folder_TargetWAV">
+              <property name="text">
+               <string>Browse</string>
+              </property>
+             </widget>
+            </item>
+            <item row="28" column="1">
+             <widget class="QLabel" name="label_Property_ifStream">
+              <property name="text">
+               <string>Property_ifStream (Sound)</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="4" column="2">
+             <widget class="QLineEdit" name="lineEdit_Path_Folder_TargetWAV"/>
+            </item>
+            <item row="21" column="1">
+             <widget class="QLabel" name="label_Property_Conversion">
+              <property name="text">
+               <string>Property_Conversion (Root)</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="2">
+             <widget class="QComboBox" name="comboBox_Structure_Type">
+              <item>
+               <property name="text">
+                <string>None</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>type1d</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>type2d</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>type3d</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>typet</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>type1d_vo</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>type2d_vo</string>
+               </property>
+              </item>
+             </widget>
+            </item>
+            <item row="6" column="2">
+             <widget class="QLineEdit" name="lineEdit_Path_InWwise_UserDefinedTemplate"/>
+            </item>
+            <item row="16" column="2">
+             <widget class="QComboBox" name="comboBox_Property_Bus_NPC"/>
+            </item>
+            <item row="5" column="2">
+             <spacer name="horizontalSpacer_2">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item row="22" column="2">
+             <widget class="QComboBox" name="comboBox_Property_Conversion"/>
+            </item>
+            <item row="27" column="2">
+             <widget class="QComboBox" name="comboBox_Property_ifPitchRandom">
+              <item>
+               <property name="text">
+                <string>False</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>True</string>
+               </property>
+              </item>
+             </widget>
+            </item>
+            <item row="3" column="1">
+             <widget class="QLabel" name="label_Path_File_PlaceholderWAV">
+              <property name="text">
+               <string>Path_File_PlaceholderWAV</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="9" column="2">
+             <widget class="QLineEdit" name="lineEdit_Path_InWwise_TargetBank"/>
+            </item>
+            <item row="32" column="2">
+             <spacer name="verticalSpacer">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item row="17" column="2">
+             <widget class="QLineEdit" name="lineEdit_Property_SwitchGroupName_PC_NPC"/>
+            </item>
+            <item row="21" column="2">
+             <widget class="QLineEdit" name="lineEdit_Property_Conversion"/>
+            </item>
+            <item row="15" column="1">
+             <widget class="QLabel" name="label_Property_Bus_NPC">
+              <property name="text">
+               <string>Property_Bus_NPC (2d/3d)</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="8" column="2">
+             <widget class="QLineEdit" name="lineEdit_Path_InWwise_TargetEvent"/>
+            </item>
+            <item row="7" column="2">
+             <widget class="QLineEdit" name="lineEdit_Path_InWwise_TargetActorMixer"/>
+            </item>
+            <item row="3" column="3">
+             <widget class="QPushButton" name="pushButton_Browse_Path_File_PlaceholderWAV">
+              <property name="text">
+               <string>Browse</string>
+              </property>
+             </widget>
+            </item>
+            <item row="6" column="1">
+             <widget class="QLabel" name="label_Path_InWwise_UserDefinedTemplate">
+              <property name="text">
+               <string>Path_InWwise_UserDefinedTemplate</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="4" column="1">
+             <widget class="QLabel" name="label_Path_Folder_TargetWAV">
+              <property name="text">
+               <string>Path_Folder_TargetWAV</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="20" column="2">
+             <widget class="QComboBox" name="comboBox_Property_SwitchGroupName_Texture"/>
+            </item>
+            <item row="17" column="1">
+             <widget class="QLabel" name="label_Property_SwitchGroupName_PC_NPC">
+              <property name="text">
+               <string>Property_SwitchGroupName_PC_NPC (2d/3d)</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="28" column="2">
+             <widget class="QComboBox" name="comboBox_Property_ifStream">
+              <item>
+               <property name="text">
+                <string>False</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>True</string>
+               </property>
+              </item>
+             </widget>
+            </item>
+            <item row="23" column="1">
+             <widget class="QLabel" name="label_Property_Positioning">
+              <property name="text">
+               <string>Property_Positioning (Root)</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="24" column="2">
+             <widget class="QComboBox" name="comboBox_Property_Positioning"/>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_statusMsg">
+            <property name="text">
+             <string/>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButton_RefreshComboBox">
+            <property name="minimumSize">
+             <size>
+              <width>30</width>
+              <height>30</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Check KeyStr</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+      </layout>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
