@@ -21,6 +21,12 @@ WHIP设计的基本倾向：
 
 1）由于分享的代码内容中包括对不同开源许可证类型来源的引用（您可以在代码中看到部分类、方法的引用的来源注释，如CC 4.0 BY-SA），目前仅有GNU GPLv3许可证类型可兼容全局内容的发布。因此，如果您有意使用代码，务必在阅读并充分了解GNU GPLv3、以及CC 4.0 BY-SA许可证内容的前提下，再进行合理使用，以免给自己带来不必要的麻烦。
 
+  *关于GNU GPLv3许可证的详情，可参考：https://www.gnu.org/licenses/gpl-3.0.html 
+  
+  *关于CC 4.0 BY-SA 许可证的详情，可参考：https://creativecommons.org/licenses/by-sa/4.0/deed.zh-hans
+  
+  *关于CC 4.0 BY-SA与GNU GPLv3的兼容性，可参考：https://creativecommons.org/share-your-work/licensing-considerations/compatible-licenses
+
 2）欢迎您对本项目的分享进行监督和批评指正。如分享的内容中存在任何涉及未注明引用来源的内容疏漏，可通过whiphelper@gmail.com与我联系并提供佐证说明。
 
 3）若您对分享的内容有任何疑问或困惑，除了通过whiphelper@gmail.com与我联系之外，也建议直接在github上留言，方便大家直接交流探讨。
@@ -50,6 +56,12 @@ Basic Design Tendencies of WHIP:
 
 1) As the shared code content includes references to sources under different open source license types (you can see source comments for some classes and methods in the code, such as CC 4.0 BY-SA), currently only the GNU GPLv3 license type is compatible with the release of all global content. Therefore, if you intend to use the code, please ensure that you have read and fully understood the contents of the GNU GPLv3 and CC 4.0 BY-SA licenses before using it reasonably, to avoid unnecessary trouble for yourself.
 
-2) We welcome you to supervise and criticize this project's sharing. If there are any omissions in the shared content involving unreferenced sources, you can contact me at whiphelper@gmail.com and provide supporting evidence.
+   *For details about the GNU GPLv3 license, please refer to: https://www.gnu.org/licenses/gpl-3.0.html 
+
+   *For details about the CC 4.0 BY-SA license, please refer to: https://creativecommons.org/licenses/by-sa/4.0/deed.en 
+
+   *For information about the compatibility between CC 4.0 BY-SA and GNU GPLv3, please refer to: https://creativecommons.org/share-your-work/licensing-considerations/compatible-licenses
+
+3) We welcome you to supervise and criticize this project's sharing. If there are any omissions in the shared content involving unreferenced sources, you can contact me at whiphelper@gmail.com and provide supporting evidence.
 
 3）If you have any questions or confusion about the shared content, in addition to contacting me via whiphelper@gmail.com, it is more recommended to leave a message directly on GitHub, which facilitates direct discussion and exchange among everyone.
