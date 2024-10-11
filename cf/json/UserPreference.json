@@ -41,7 +41,8 @@
         "type3d",
         "typet",
         "type1d_vo",
-        "type2d_vo"
+        "type2d_vo",
+        "type2d_gun"
     ],
     "validKeyInfoItems": [
         "Structure_Type",
@@ -60,6 +61,19 @@
         "Property_ifPitchRandom",
         "Property_ifStream"
     ],
+    "ValidGunLayer": {
+        "PC": [
+            "Fire",
+            "Mech",
+            "Sub",
+            "Sweetener",
+            "Transient"
+        ],
+        "NPC": [
+            "Fire",
+            "Sweetener"
+        ]
+    },
     "-----[GUI ShortCuts]-----": "------------------------------------------------------------------------------------",
     "ShortCut_action_Load": "Ctrl+Shift+L",
     "ShortCut_action_EditKeyInfo": "",

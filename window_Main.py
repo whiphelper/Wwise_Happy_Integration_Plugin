@@ -165,6 +165,7 @@ class Thread_XlsxToJson(QThread):
 
         NewJson = {
             "$ProjectStr$": global_curWwiseProjName,
+            "$ProjectGUID$": global_curWwiseProjID,
             "Data_SoundList": {}
         }
         Data_SoundList = {}
@@ -303,75 +304,76 @@ class Thread_WwuToJson(QThread):
             if len(eventInfoDict) != 0:
                 SoundListDict_New = CreateBasicStructure_SoundListDict()
                 existIDList = []
-                for index, eventStr, info in zip(range(len(eventInfoDict)), eventInfoDict.keys(),
-                                                 eventInfoDict.values()):
-                    tempIDStr = Get_SoundID_FromNotes(str(info["Notes"]))
+                for index, eventStr, info in zip(range(len(eventInfoDict)), eventInfoDict.keys(), eventInfoDict.values()):
+                    tempIDNotesList = Get_SoundID_FromNotes(str(info["Notes"]))
                     tempEventName = eventStr
 
                     # 决定ID的值
-                    if len(tempIDStr) != 0:  # 如果ID有值，说明notes里有ID信息
-                        if tempIDStr not in existIDList:  # 判断这个ID是不是在existIDList记录中
-                            existIDList.append(tempIDStr)
-                            NewID = tempIDStr
-                        else:
+                    for item in tempIDNotesList:
+                        if len(item[0]) != 0:  # 如果ID有值，说明notes里有ID信息
+                            if item[0] not in existIDList:  # 判断这个ID是不是在existIDList记录中
+                                existIDList.append(int(item[0]))
+                                NewID = item[0]
+                            else:
+                                NewID = GenerateSmallestID(existIDList)
+                                existIDList.append(int(NewID))
+                        else:  # 如果ID没值，说明notes里没信息。则直接产生新的ID
                             NewID = GenerateSmallestID(existIDList)
-                            existIDList.append(NewID)
-                    else:  # 如果ID没值，说明notes里没信息。则直接产生新的ID
-                        NewID = GenerateSmallestID(existIDList)
-                        existIDList.append(NewID)
+                            existIDList.append(int(NewID))
 
-                    infoDict = {
-                        "ID_textColor": "#000000",
-                        "ID_bgColor": "#ffffff",
-                        "Notes": {
-                            "text": "",
-                            "textColor": "#000000",
-                            "bgColor": "#ffffff"
-                        },
-                        "EventName": {
-                            "text": "",
-                            "textColor": "#000000",
-                            "bgColor": "#ffffff"
-                        },
-                        "BankName": {
-                            "text": "",
-                            "textColor": "#000000",
-                            "bgColor": "#ffffff"
-                        },
-                        "KeyStr": {
-                            "text": "",
-                            "textColor": "#000000",
-                            "bgColor": "#ffffff"
-                        },
-                        "BodyStr": {
-                            "text": "",
-                            "textColor": "#000000",
-                            "bgColor": "#ffffff"
-                        },
-                        "TailStr": {
-                            "text": "",
-                            "textColor": "#000000",
-                            "bgColor": "#ffffff"
-                        },
-                        "RDM": {
-                            "text": "",
-                            "textColor": "#000000",
-                            "bgColor": "#ffffff"
-                        },
-                        "Lock": {
-                            "text": "",
-                            "textColor": "#000000",
-                            "bgColor": "#ffffff"
-                        },
-                        "MirrorFrom": {
-                            "text": "",
-                            "textColor": "#000000",
-                            "bgColor": "#ffffff"
+                        infoDict = {
+                            "ID_textColor": "#000000",
+                            "ID_bgColor": "#ffffff",
+                            "Notes": {
+                                "text": "",
+                                "textColor": "#000000",
+                                "bgColor": "#ffffff"
+                            },
+                            "EventName": {
+                                "text": "",
+                                "textColor": "#000000",
+                                "bgColor": "#ffffff"
+                            },
+                            "BankName": {
+                                "text": "",
+                                "textColor": "#000000",
+                                "bgColor": "#ffffff"
+                            },
+                            "KeyStr": {
+                                "text": "",
+                                "textColor": "#000000",
+                                "bgColor": "#ffffff"
+                            },
+                            "BodyStr": {
+                                "text": "",
+                                "textColor": "#000000",
+                                "bgColor": "#ffffff"
+                            },
+                            "TailStr": {
+                                "text": "",
+                                "textColor": "#000000",
+                                "bgColor": "#ffffff"
+                            },
+                            "RDM": {
+                                "text": "",
+                                "textColor": "#000000",
+                                "bgColor": "#ffffff"
+                            },
+                            "Lock": {
+                                "text": "",
+                                "textColor": "#000000",
+                                "bgColor": "#ffffff"
+                            },
+                            "MirrorFrom": {
+                                "text": "",
+                                "textColor": "#000000",
+                                "bgColor": "#ffffff"
+                            }
                         }
-                    }
-                    infoDict["Notes"]["text"] = info["Notes"]
-                    infoDict["EventName"]["text"] = tempEventName
-                    SoundListDict_New["Data_SoundList"][NewID] = infoDict
+                        infoDict["Notes"]["text"] = item[1]
+                        infoDict["EventName"]["text"] = tempEventName
+                        SoundListDict_New["Data_SoundList"][str(NewID)] = infoDict
+                        # LOG.info(str([str(NewID), tempEventName, item[1]]))
 
                     # 发送进度
                     EmitList = [index + 1, eventCount]
@@ -1019,6 +1021,7 @@ class Window_Main(QMainWindow):
         self.tableWidget_SoundSheet.setColumnWidth(key["Header_MirrorFrom"], 100)
         self.tableWidget_SoundSheet.cellChanged.connect(self.Action_AfterCellChanged)
         self.tableWidget_SoundSheet.itemSelectionChanged.connect(self.Action_AfterItemSelectionChanged)
+        self.tableWidget_SoundSheet_Order = Qt.DescendingOrder
 
         # ------------------------------------------------------------------- Set Logic ----- Panel ----- Log Console
         self.textEdit_Log.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -1721,7 +1724,7 @@ class Window_Main(QMainWindow):
                     self.progressBar.setValue(int(ProgressBar_Count / TotalRowNum * 100))
 
                 # 保存JSON
-                LiteDict = {"$ProjectStr$": global_curWwiseProjName, "Data_SoundList": Data_SoundList_ReScan}
+                LiteDict = {"$ProjectStr$": global_curWwiseProjName, "$ProjectGUID$": global_curWwiseProjID, "Data_SoundList": Data_SoundList_ReScan}
                 SaveJson(LiteDict, jsonFilePath)
                 LOG.info(lan["GUI_LOG_JSONHasBeenExported"][L] + str(jsonFilePath))
                 open_file_folder_highlight(jsonFilePath)
@@ -2649,20 +2652,48 @@ class Window_Main(QMainWindow):
 
                                 # 将EventStr和Lock写入TABLEALL
                                 try:
-                                    if tempNTG[1][1][-3:] == "_LP":  # 如果命名中标注了循环，则需要再新增一行，补充Stop事件的Event信息
+                                    if WaapiGoType != "type2d_gun":
+                                        if tempNTG[1][1][-3:] == "_LP":  # 如果命名中标注了循环，则需要再新增一行，补充Stop事件的Event信息
+                                            # 写Play
+                                            self.WriteCell_ForTable(r, key["Header_EventName"], vID, "EventName", tempNTG[1][2])
+                                            # 在表格底部新增一行（写StopEvent、Notes、Lock，同时给Stop行更新Wwise里的Notes）
+                                            NewLineNum = self.Action_AddLine_AtBottom()
+                                            # 给新行写StopEvent
+                                            self.WriteCell_ForTable(NewLineNum, key["Header_EventName"], vID, "EventName",
+                                                                    "Stop_" + tempNTG[1][1])
+                                            # 给新行写StopNotes
+                                            vNotes = self.tableWidget_SoundSheet.item(r, key["Header_Notes"]).text()
+                                            self.WriteCell_ForTable(NewLineNum, key["Header_Notes"], vID, "Notes", vNotes)
+                                            # 给Stop新行更新Wwise里的Notes
+                                            vEvent_Stop = self.tableWidget_SoundSheet.item(NewLineNum,
+                                                                                           key["Header_EventName"]).text()
+                                            vID_Stop = self.tableWidget_SoundSheet.item(NewLineNum, key["Header_ID"]).text()
+                                            # GUID_Stop = aoligei.getSingleEventGUIDFromEventWWU(vEvent_Stop)
+                                            GUID_Stop = aoligei.get_EventGUID_From_EventName(vEvent_Stop)
+                                            # if len(GUID_Stop) != 0:
+                                            if GUID_Stop is not None and len(GUID_Stop) != 0:
+                                                NewNotes = "#" + str(vID_Stop) + "#," + str(vNotes)
+                                                aoligei.setNotesForGUID(GUID_Stop, NewNotes)
+                                            # 给新行写StopLock
+                                            self.WriteCell_ForTable(NewLineNum, key["Header_Lock"], vID, "Lock",
+                                                                    key["LockedStrValue"])
+                                        else:
+                                            # 写Play
+                                            self.WriteCell_ForTable(r, key["Header_EventName"], vID, "EventName", tempNTG[1][2])
+                                    else:
                                         # 写Play
                                         self.WriteCell_ForTable(r, key["Header_EventName"], vID, "EventName", tempNTG[1][2])
-                                        # 在表格底部新增一行（写StopEvent、Notes、Lock，同时给Stop行更新Wwise里的Notes）
+
+                                        # 在表格底部新增一行（写LoopEvent、Notes、Lock，同时给Stop行更新Wwise里的Notes）
                                         NewLineNum = self.Action_AddLine_AtBottom()
-                                        # 给新行写StopEvent
+                                        # 给新行写LoopEvent
                                         self.WriteCell_ForTable(NewLineNum, key["Header_EventName"], vID, "EventName",
-                                                                "Stop_" + tempNTG[1][1])
-                                        # 给新行写StopNotes
-                                        vNotes = self.tableWidget_SoundSheet.item(r, key["Header_Notes"]).text()
+                                                                "Play_" + tempNTG[1][1] + "_LP")
+                                        # 给新行写LoopNotes
+                                        vNotes = self.tableWidget_SoundSheet.item(r, key["Header_Notes"]).text() + "-Loop"
                                         self.WriteCell_ForTable(NewLineNum, key["Header_Notes"], vID, "Notes", vNotes)
-                                        # 给Stop新行更新Wwise里的Notes
-                                        vEvent_Stop = self.tableWidget_SoundSheet.item(NewLineNum,
-                                                                                       key["Header_EventName"]).text()
+                                        # 给Loop新行更新Wwise里的Notes
+                                        vEvent_Stop = self.tableWidget_SoundSheet.item(NewLineNum, key["Header_EventName"]).text()
                                         vID_Stop = self.tableWidget_SoundSheet.item(NewLineNum, key["Header_ID"]).text()
                                         # GUID_Stop = aoligei.getSingleEventGUIDFromEventWWU(vEvent_Stop)
                                         GUID_Stop = aoligei.get_EventGUID_From_EventName(vEvent_Stop)
@@ -2673,9 +2704,25 @@ class Window_Main(QMainWindow):
                                         # 给新行写StopLock
                                         self.WriteCell_ForTable(NewLineNum, key["Header_Lock"], vID, "Lock",
                                                                 key["LockedStrValue"])
-                                    else:
-                                        # 写Play
-                                        self.WriteCell_ForTable(r, key["Header_EventName"], vID, "EventName", tempNTG[1][2])
+
+                                        # 在表格底部新增一行（写StopEvent、Notes、Lock，同时给Stop行更新Wwise里的Notes）
+                                        NewLineNum = self.Action_AddLine_AtBottom()
+                                        # 给新行写StopEvent
+                                        self.WriteCell_ForTable(NewLineNum, key["Header_EventName"], vID, "EventName", "Stop_" + tempNTG[1][1] + "_LP")
+                                        # 给新行写StopNotes
+                                        vNotes = self.tableWidget_SoundSheet.item(r, key["Header_Notes"]).text() + "-Stop Loop"
+                                        self.WriteCell_ForTable(NewLineNum, key["Header_Notes"], vID, "Notes", vNotes)
+                                        # 给Stop新行更新Wwise里的Notes
+                                        vEvent_Stop = self.tableWidget_SoundSheet.item(NewLineNum, key["Header_EventName"]).text()
+                                        vID_Stop = self.tableWidget_SoundSheet.item(NewLineNum, key["Header_ID"]).text()
+                                        # GUID_Stop = aoligei.getSingleEventGUIDFromEventWWU(vEvent_Stop)
+                                        GUID_Stop = aoligei.get_EventGUID_From_EventName(vEvent_Stop)
+                                        # if len(GUID_Stop) != 0:
+                                        if GUID_Stop is not None and len(GUID_Stop) != 0:
+                                            NewNotes = "#" + str(vID_Stop) + "#," + str(vNotes)
+                                            aoligei.setNotesForGUID(GUID_Stop, NewNotes)
+                                        # 给新行写StopLock
+                                        self.WriteCell_ForTable(NewLineNum, key["Header_Lock"], vID, "Lock", key["LockedStrValue"])
 
                                     # 给Event更新Notes
                                     vEvent = self.tableWidget_SoundSheet.item(r, key["Header_EventName"]).text()
@@ -2853,6 +2900,13 @@ class Window_Main(QMainWindow):
                     if vfName not in list(KeyInfoDict["Data_KeyInfo"].keys()):
                         LOG.warning("Line" + str(r + 1) + ": " + lan["LOG_NSG_def_nameStrGen_fnameInvalid_Skip"][L])
                         continue
+
+                    # 为type2d_gun临时添加判断，临时阻止ExpandSwitch、Mirror、ReCreate功能
+                    KEYSTRDICT = KeyInfoDict["Data_KeyInfo"].get(vfName, "!@#")
+                    if KEYSTRDICT != "!@#":
+                        if KEYSTRDICT["Structure_Type"] == "type2d_gun":
+                            LOG.warning("Line" + str(r + 1) + ": " + lan["LOG_NSG_def_nameStrGen_type2dgunNotAvalible_Skip"][L])
+                            continue
 
                     # 如果上一步Lock检查未被跳过，则继续执行Create NameStr，产生字符串大包装
                     LOG.info("Line" + str(r + 1) + lan["LOG_SM_def_WaapiGo_LockCheck_PASS"][L])
@@ -3088,6 +3142,13 @@ class Window_Main(QMainWindow):
                     vRanNum = self.tableWidget_SoundSheet.item(r, key["Header_RDM"]).text()
                     vLock = self.tableWidget_SoundSheet.item(r, key["Header_Lock"]).text()
                     vMirrorID = self.tableWidget_SoundSheet.item(r, key["Header_MirrorFrom"]).text()
+
+                    # 为type2d_gun临时添加判断，临时阻止ExpandSwitch、Mirror、ReCreate功能
+                    KEYSTRDICT = KeyInfoDict["Data_KeyInfo"].get(vfName, "!@#")
+                    if KEYSTRDICT != "!@#":
+                        if KEYSTRDICT["Structure_Type"] == "type2d_gun":
+                            LOG.warning("Line" + str(r + 1) + ": " + lan["LOG_NSG_def_nameStrGen_type2dgunNotAvalible_Skip"][L])
+                            continue
 
                     # 寻找K列有数据的行，检查该行安全锁是否解锁
                     if vLock == "1":
@@ -3489,6 +3550,13 @@ class Window_Main(QMainWindow):
                     vRanNum = self.tableWidget_SoundSheet.item(r, key["Header_RDM"]).text()
                     Lock = self.tableWidget_SoundSheet.item(r, key["Header_Lock"]).text()
 
+                    # 为type2d_gun临时添加判断，临时阻止ExpandSwitch、Mirror、ReCreate功能
+                    KEYSTRDICT = KeyInfoDict["Data_KeyInfo"].get(vfName, "!@#")
+                    if KEYSTRDICT != "!@#":
+                        if KEYSTRDICT["Structure_Type"] == "type2d_gun":
+                            LOG.warning("Line" + str(r + 1) + ": " + lan["LOG_NSG_def_nameStrGen_type2dgunNotAvalible_Skip"][L])
+                            continue
+
                     # 先确认ID是否有非法的，有的话跳过循环！
                     duplicatedIDCheck = self.SafetyCheck_ID(vID, AllIDList)
                     if len(duplicatedIDCheck) != 0:
@@ -3880,6 +3948,12 @@ class Window_Main(QMainWindow):
         Menu.addAction(action_ExportRequest_Chinese)
         action_ExportRequest_Chinese.triggered.connect(self.ExportRequestXLSX)
 
+        Menu.addSeparator()
+
+        action_ChangeOrder = QAction(lan["GUI_action_Order"][L], self)
+        Menu.addAction(action_ChangeOrder)
+        action_ChangeOrder.triggered.connect(self.ChangeOrder)
+
         Menu.popup(QCursor.pos())
 
     def PlayEvent(self):
@@ -4041,6 +4115,8 @@ class Window_Main(QMainWindow):
             go = SimpleWaapi()
             rowList = self.GetSelectedRows()
             if len(rowList) != 0:
+                # 先获取全局信息，分组后，再执行的方法
+                EventNotesDict = {}
                 for row in rowList:
                     idText = self.tableWidget_SoundSheet.item(row, key["Header_ID"]).text()
                     noteText = self.tableWidget_SoundSheet.item(row, key["Header_Notes"]).text()
@@ -4053,8 +4129,34 @@ class Window_Main(QMainWindow):
                             pass
                         else:
                             TarNoteStr = "#" + idText + "#," + noteText
-                            go.RenewNotesForGUID(eventGUID, TarNoteStr)
-                            LOG.info(lan["GUI_SM_RC_action_RenewNotesForEvents_Mark"][L] + str(row + 1) + "   " + idText + " " + eventText + " --> " + noteText)
+                            if EventNotesDict.get(eventGUID, "@#$") == "@#$":
+                                EventNotesDict[eventGUID] = [TarNoteStr]
+                            else:
+                                EventNotesDict[eventGUID].append(TarNoteStr)
+                # LOG.info(EventNotesDict)
+
+                for kk, vv in zip(EventNotesDict.keys(), EventNotesDict.values()):
+                    vvv = ConnectStr(vv)
+                    # LOG.info(vvv)
+                    go.RenewNotesForGUID(kk, vvv)
+                    eventName = go.get_NameOfGUID(kk)
+                    LOG.info(lan["GUI_SM_RC_action_RenewNotesForEvents_Mark"][L] + " --> " + str(eventName) + " --> " + vvv)
+
+                # # 直接逐行执行的方法
+                # for row in rowList:
+                #     idText = self.tableWidget_SoundSheet.item(row, key["Header_ID"]).text()
+                #     noteText = self.tableWidget_SoundSheet.item(row, key["Header_Notes"]).text()
+                #     eventText = self.tableWidget_SoundSheet.item(row, key["Header_EventName"]).text()
+                #     if len(eventText) == 0:
+                #         pass
+                #     else:
+                #         eventGUID = go.get_EventGUID_From_EventName(eventText)
+                #         if eventGUID is None:
+                #             pass
+                #         else:
+                #             TarNoteStr = "#" + idText + "#," + noteText
+                #             go.RenewNotesForGUID(eventGUID, TarNoteStr)
+                #             LOG.info(lan["GUI_SM_RC_action_RenewNotesForEvents_Mark"][L] + str(row + 1) + "   " + idText + " " + eventText + " --> " + noteText)
             go.__del__()
         except:
             traceback.print_exc()
@@ -4170,7 +4272,15 @@ class Window_Main(QMainWindow):
                         LOG.warning("Line" + str(r + 1) + lan["LOG_SM_def_WaapiGo_NamingErrorCheck_FAIL"][L])
                     else:
                         # 生成wav大包
-                        flatList = [x for x in flatten(tempNTG[2])]
+                        # 判断是否为type2d_gun类型
+                        if type(tempNTG[2]) is dict:
+                            tempList = []
+                            for subList in tempNTG[2].values():
+                                tempList.append(subList)
+                            flatList = [x for x in flatten(tempList)]
+                        else:
+                            flatList = [x for x in flatten(tempNTG[2])]
+
                         for items in flatList:
                             ListForExport.append(str(items))
 
@@ -4442,8 +4552,14 @@ class Window_Main(QMainWindow):
                 LocalInfoDict["Path_DefaultSaveAsFolder"] = currentText
                 SaveJson(LocalInfoDict, global_curWwiseLocalJson)
             else:
-                self.lineEdit_SaveAsDefaultFolderPath.setStyleSheet("color:red")
-                self.lineEdit_SaveAsDefaultFolderPath.setFont(QFont(self.GetDefaultFont()))
+                if len(currentText) != 0:
+                    self.lineEdit_SaveAsDefaultFolderPath.setStyleSheet("color:red")
+                    self.lineEdit_SaveAsDefaultFolderPath.setFont(QFont(self.GetDefaultFont()))
+                else:
+                    self.lineEdit_SaveAsDefaultFolderPath.setStyleSheet("color:red")
+                    self.lineEdit_SaveAsDefaultFolderPath.setFont(QFont(self.GetDefaultFont()))
+                    LocalInfoDict["Path_DefaultSaveAsFolder"] = currentText
+                    SaveJson(LocalInfoDict, global_curWwiseLocalJson)
         except:
             traceback.print_exc()
 
@@ -4517,7 +4633,7 @@ class Window_Main(QMainWindow):
             # LOG.debug(ValueID)
             if ValueID is not None and len(ValueID) != 0:  # 检查ID是否缺失（None或长度为0）
                 AllIDList.append(ValueID)
-                checkResult = CheckIfStringHasInvalidCharactor(ValueID)  # 进一步检查ID内是否包含非法字符
+                checkResult = ifValidID(ValueID)  # 进一步检查ID内是否包含非法字符
                 if checkResult is False:
                     InvalidIDStr.append(i + 1)
             else:
@@ -4692,6 +4808,16 @@ class Window_Main(QMainWindow):
 
         return rowList
 
+    def GetSelectedCols(self):
+        ColList = []
+        items = self.tableWidget_SoundSheet.selectedItems()
+        for cell in items:
+            ColList.append(cell.column())
+
+        ColList = sorted(list(set(ColList)))
+
+        return ColList
+
     def MessageBox(self, titleText, infoText, func, *args):
         messageBox = QMessageBox(QMessageBox.Warning, titleText, infoText)
         messageBox.setFont(QFont(self.GetDefaultFont(), key["DefaultFont_Size"]))
@@ -4773,7 +4899,7 @@ class Window_Main(QMainWindow):
 
         # 全量检查待执行区域内是否存在合法ID、缺失ID、重复ID（存入非法ID组）（将表格全局所有ID汇总到ListA中，将待执行区域的ID会中的ListB中；遍历ListB中每一个ID，与ListA中的每一个元素对比，将同样的值放在新List中，检查新List的元素数量，如果大于1，说明这个ID有重复）
         # 合法ID检查（输入是否合法、是否缺失）
-        if SoundID == "None" or len(ifStrHasInvalidChar(SoundID)) != 0:
+        if SoundID == "None" or ifValidID(SoundID) is False:
             errorLog.append("error")
 
         # 重复ID检查
@@ -4981,3 +5107,52 @@ class Window_Main(QMainWindow):
                     }
                     self.MessageBox(lan["SC_SafetyCheckStartNotice_Title"][L],
                                     lan[textMatch[func]][L], func, rowList)
+
+    def ChangeOrder(self):
+        # 先判断保存状态
+        if self.NeedSafeFlag == 1:
+            # 关闭窗口时触发以下事件
+            messageBox = QMessageBox(QMessageBox.Warning, lan["GUI_LOG_NotSavedYet_PreCheckBeforeSorting_Title"][L],
+                                     lan["GUI_LOG_NotSavedYet_PreCheckBeforeImplement_Text"][L])
+            messageBox.setFont(QFont(self.GetDefaultFont(), key["DefaultFont_Size"]))
+            Qyes = messageBox.addButton(self.tr(lan["GUI_SafetyAlert_READY"][L]), QMessageBox.YesRole)
+            Qno = messageBox.addButton(self.tr(lan["GUI_SafetyAlert_CANCEL"][L]), QMessageBox.NoRole)
+            messageBox.exec_()
+            if messageBox.clickedButton() == Qyes:
+                pass
+        else:
+            # 获取选中的行数
+            colList = self.GetSelectedCols()
+            TotalColNum = len(colList)
+            if TotalColNum == 1:  # 如果有选中某个特定的行
+                self.textEdit_Log.setVisible(True)
+                col = colList[0]
+                # 根据行数排序
+                if self.tableWidget_SoundSheet_Order == Qt.DescendingOrder:
+                    self.tableWidget_SoundSheet_Order = Qt.AscendingOrder
+                else:
+                    self.tableWidget_SoundSheet_Order = Qt.DescendingOrder
+
+                # 无法撤销提示
+                messageBox = QMessageBox(QMessageBox.Warning, lan["GUI_LOG_OrderCanNotBeRedo_Title"][L],
+                                         lan["GUI_LOG_OrderCanNotBeRedo_Text"][L])
+                messageBox.setFont(QFont(self.GetDefaultFont(), key["DefaultFont_Size"]))
+                Qyes = messageBox.addButton(self.tr(lan["GUI_SafetyAlert_READY"][L]), QMessageBox.YesRole)
+                Qno = messageBox.addButton(self.tr(lan["GUI_SafetyAlert_CANCEL"][L]), QMessageBox.NoRole)
+                messageBox.exec_()
+                if messageBox.clickedButton() == Qyes:
+                    self.tableWidget_SoundSheet.sortItems(col, self.tableWidget_SoundSheet_Order)
+
+                    # 添加提示保存
+                    self.NeedSafeFlag = 1
+                    self.SetState_Save()
+
+                    # 清理Undo或Redo历史防止误修改
+                    UndoList.clear()
+                    RedoList.clear()
+                    self.UndoRedoNumShow()
+
+                    LOG.info(lan["GUI_LOG_Ordered_Done"][L])
+            else:
+                LOG.info(lan["GUI_LOG_Ordered_Cancel"][L])
+

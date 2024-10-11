@@ -152,6 +152,18 @@ def ifStrHasInvalidChar(string):
 
     return invalidlog
 
+def ifValidID(SoundID):
+    SoundID = str(SoundID)
+    validList = ["1","2","3","4","5","6","7","8","9","0"]
+    invalidcount = 0
+    for eachChar in SoundID:
+        if eachChar not in validList:
+            invalidcount += 1
+
+    if invalidcount == 0:
+        return True
+    else:
+        return False
 
 def CheckIfTargetObjectIsUnderTargetPath(TargetPath, TargetObjectName):  # 检查指定对象是否存在于指定路径下
     # 判断合法性
@@ -325,6 +337,8 @@ def CheckIfJsonIsValidSoundSheet(jsonPath):  # 检查info.json的基本格式是
         SoundListDictt = LoadJson(jsonPath, "gbk")
         if SoundListDictt.get("$ProjectStr$", {}) == {} or len(SoundListDictt.get("$ProjectStr$", {})) == 0:
             return False
+        elif SoundListDictt.get("$ProjectGUID$", {}) == {} or len(SoundListDictt.get("$ProjectGUID$", {})) == 0:
+            return False
         elif SoundListDictt.get("Data_SoundList", "") == "" or type(SoundListDictt.get("Data_SoundList", "")) is not dict:
             return False
         else:
@@ -362,6 +376,7 @@ def SafetyCheck_WwiseRunningStatus_Detailed():
 def CreateBasicStructure_SoundListDict():
     SoundListDictt = {
         "$ProjectStr$": global_curWwiseProjName,
+        "$ProjectGUID$": global_curWwiseProjID,
         "Data_SoundList": {}
     }
     return SoundListDictt
@@ -895,24 +910,37 @@ def IfStringContainsSoundID(string):
 
 def Get_SoundID_FromNotes(noteStr):
     noteStr = str(noteStr)
-    if "," in noteStr or "，" in noteStr:
-        # 使用split()方法分割字符串
-        segments = noteStr.split(",") if "," in noteStr else noteStr.split("，")
-        # 打印第一段
-        strID = segments[0]
-        if IfStringContainsSoundID(strID) is True:
-            cleanID = strID[1:-1]
-            return cleanID
-        else:
-            return ""
+    tempList = []
+    # 先判断是否有;
+    if ";" in noteStr:
+        groups = noteStr.split(";") if ";" in noteStr else noteStr.split(";")
+        tempList = groups
     else:
-        strIDe = noteStr
-        if IfStringContainsSoundID(strIDe) is True:
-            cleanID = strIDe[1:-1]
-            return cleanID
-        else:
-            return ""
+        tempList = [noteStr]
 
+    finalList = []
+    if len(tempList) != 0:
+        for item in tempList:
+            # 再判断是否有,
+            if "," in item or "，" in item:
+                # 使用split()方法分割字符串
+                segments = item.split(",") if "," in item else item.split("，")
+                # 打印第一段
+                strID = segments[0]
+                if IfStringContainsSoundID(strID) is True:
+                    cleanID = strID[1:-1]
+                    finalList.append([cleanID, segments[1]])
+                else:
+                    finalList.append(["", segments[1]])
+            else:
+                strIDe = item
+                if IfStringContainsSoundID(strIDe) is True:
+                    cleanID = strIDe[1:-1]
+                    finalList.append([cleanID, strIDe])
+                else:
+                    finalList.append(["", strIDe])
+    # LOG.info(str(finalList))
+    return finalList
 
 def open_file_folder_highlight(file_path):  # 使用explorer命令打开文件夹并高亮文件
     folder_path = os.path.dirname(file_path)
@@ -1570,3 +1598,21 @@ def is_instance_exist(cls):
 def hide_file(file_path):
     # 设置文件属性为隐藏
     ctypes.windll.kernel32.SetFileAttributesW(file_path, 2)
+
+
+def ConnectStr(InputList):
+    sss = ""
+    for strrrrr in InputList:
+        sss = sss + ";" + strrrrr
+    sss = sss[1:]
+    return sss
+
+
+def sort_dict_by_integer_keys(input_dict):
+    # 将所有的键转换为整数,并按照数值大小排序
+    sorted_keys = sorted(input_dict.keys(), key=int)
+
+    # 创建一个新的字典,使用排序后的键的字符串表示作为新的键
+    sorted_dictt = {str(keey): input_dict[keey] for keey in sorted_keys}
+
+    return sorted_dictt

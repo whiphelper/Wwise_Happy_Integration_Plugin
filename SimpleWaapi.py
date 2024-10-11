@@ -353,6 +353,22 @@ class SimpleWaapi:
             except:
                 return None
 
+    def get_EventGUID_AndNotes_From_EventName(self, EventStr):
+        if self.GO is not None:
+            args = {
+                "from": {
+                    "name": ["Event:" + EventStr]
+                },
+                "options": {
+                    "return": ["id", "notes"]
+                }
+            }
+            Result = self.GO.call("ak.wwise.core.object.get", args)
+            try:
+                return [Result["return"][0]["id"], Result["return"][0]["notes"]]
+            except:
+                return None
+
     def get_Path_From_SwitchGroupName(self, SwitchGroupStr):
         if self.GO is not None:
             args = {
@@ -1892,7 +1908,7 @@ class SimpleWaapi:
                     "type": "Action",
                     "@ActionType": 2,
                     "@Target": TarActorPath + "\\" + NamePool[1][1],
-                    "@FadeTime": 2.5
+                    "@FadeTime": 0.5
                 }]
             }
             self.GO.call("ak.wwise.core.object.create", args)
@@ -1995,7 +2011,7 @@ class SimpleWaapi:
                     "type": "Action",
                     "@ActionType": 2,
                     "@Target": TarActorPath + "\\" + NamePool[1][1],
-                    "@FadeTime": 2.5
+                    "@FadeTime": 0.5
                 }]
             }
             self.GO.call("ak.wwise.core.object.create", args)
@@ -2187,10 +2203,412 @@ class SimpleWaapi:
                     "type": "Action",
                     "@ActionType": 2,
                     "@Target": TarActorPath + "\\" + NamePool[1][1],
-                    "@FadeTime": 2.5
+                    "@FadeTime": 0.5
                 }]
             }
             self.GO.call("ak.wwise.core.object.create", args)
+
+        # Save the Project
+        args = {}
+        self.GO.call("ak.wwise.core.project.save", args)
+
+    def type2d_gun(self, Id, Fname, Sname, Tname, Rannum):
+        NamePool = self.nameStrGen(Id, Fname, Sname, Tname, Rannum)
+
+        MPSwitchGroupName = KeyInfoDict["Data_KeyInfo"][Fname]["Property_SwitchGroupName_PC_NPC"]
+        MPSwitchGroupPath = self.get_Path_From_SwitchGroupName(MPSwitchGroupName)
+        MPSwitchList = self.getSwitchFromSwitchWWU(MPSwitchGroupName)
+
+        SourceWAVPath = os.path.join(global_curWwisePath, KeyInfoDict["Data_KeyInfo"][Fname]["Path_Folder_TargetWAV"])
+        TarActorPath = KeyInfoDict["Data_KeyInfo"][Fname]["Path_InWwise_TargetActorMixer"]
+        NPCBusPath = KeyInfoDict["Data_KeyInfo"][Fname]["Property_Bus_NPC"]
+        TarEventPath = KeyInfoDict["Data_KeyInfo"][Fname]["Path_InWwise_TargetEvent"]
+        AttenuationPath = KeyInfoDict["Data_KeyInfo"][Fname]["Property_Positioning"]
+        ifPitchRandom = KeyInfoDict["Data_KeyInfo"][Fname]["Property_ifPitchRandom"]
+        ifStream = KeyInfoDict["Data_KeyInfo"][Fname]["Property_ifStream"]
+
+        FireName_PC = key["ValidGunLayer"]["PC"]
+        FireName_NPC = key["ValidGunLayer"]["NPC"]
+
+        # Create the Switch Container For TAIL
+        args = {
+            "parent": TarActorPath,
+            "type": "SwitchContainer",
+            "name": NamePool[1][3],
+            "onNameConflict": "merge",
+            "notes": NamePool[1][0]
+        }
+        result = self.GO.call("ak.wwise.core.object.create", args)
+        SwitchContainerGUID_Tail = result.get("id", None)
+
+        if SwitchContainerGUID_Tail is not None:
+            # Set Property
+            args = {
+                "object": SwitchContainerGUID_Tail,
+                "reference": "SwitchGroupOrStateGroup",
+                "value": MPSwitchGroupPath
+            }
+            self.GO.call("ak.wwise.core.object.setReference", args)
+
+            # Import Switch Container and Assign Switch
+            for i in range(len(MPSwitchList)):
+                args = {
+                    "importOperation": "useExisting",
+                    "default": {},
+                    "imports": [{
+                        "importLanguage": "SFX",
+                        "@Volume": "0",
+                        "objectPath": TarActorPath + "\\" + NamePool[1][3] + "\\<Random Container>" + MPSwitchList[i],
+                        "switchAssignation": MPSwitchList[i]
+                    }]
+                }
+                self.GO.call("ak.wwise.core.audio.import", args)
+
+            # Set the OverrideOutPutBus for NPC RandomContainer
+            args = {
+                "object": TarActorPath + "\\" + NamePool[1][3] + "\\" + MPSwitchList[1],
+                "property": "OverrideOutput",
+                "value": "True"
+            }
+            self.GO.call("ak.wwise.core.object.setProperty", args)
+
+            # Set the OutputBUS for NPC RandomContainer
+            args = {
+                "object": TarActorPath + "\\" + NamePool[1][3] + "\\" + MPSwitchList[1],
+                "reference": "OutputBus",
+                "value": NPCBusPath
+            }
+            self.GO.call("ak.wwise.core.object.setReference", args)
+
+            # Set Gen 3D Attenuation for All Parents
+            args = {
+                "object": TarActorPath + "\\" + NamePool[1][3] + "\\" + MPSwitchList[1],
+                "property": "OverridePositioning",
+                "value": "True"
+            }
+            self.GO.call("ak.wwise.core.object.setProperty", args)
+
+            args = {
+                "object": TarActorPath + "\\" + NamePool[1][3] + "\\" + MPSwitchList[1],
+                "property": "3DSpatialization",
+                "value": "2"
+            }
+            self.GO.call("ak.wwise.core.object.setProperty", args)
+
+            args = {
+                "object": TarActorPath + "\\" + NamePool[1][3] + "\\" + MPSwitchList[1],
+                "reference": "Attenuation",
+                "value": AttenuationPath
+            }
+            self.GO.call("ak.wwise.core.object.setReference", args)
+
+            # Import audio files for RandomContainer
+            for j in range(len(MPSwitchList)):
+                for i in range(len(NamePool[2]["Tail"])):
+                    args = {
+                        "importOperation": "useExisting",
+                        "default": {"importLanguage": "SFX"},
+                        "imports": [{
+                            "audioFile": SourceWAVPath + NamePool[2]["Tail"][i] + ".wav",
+                            "objectPath": TarActorPath + "\\" + NamePool[1][3] + "\\" + MPSwitchList[j] + "\\<Sound SFX>" + NamePool[2]["Tail"][i]
+                        }]
+                    }
+                    self.GO.call("ak.wwise.core.audio.import", args)
+                    LOG.info(
+                        lan["LOG_WG_HeadTip_DONE"][L] + str(NamePool[2]["Tail"][i]) + lan["LOG_WG_def_ImportWAVForContainer"][L])
+
+                    # Set Randomizer for RandomContainer
+                    if ifPitchRandom == "True":
+                        args = {
+                            "object": TarActorPath + "\\" + NamePool[1][3] + "\\" + MPSwitchList[j] + "\\" + NamePool[2]["Tail"][i],
+                            "property": "Pitch",
+                            "enabled": True,
+                            "min": KeyInfoDict["InitPitchRandomMin"],
+                            "max": KeyInfoDict["InitPitchRandomMax"]
+                        }
+                        result = self.GO.call("ak.wwise.core.object.setRandomizer", args)
+                        if result is None:
+                            LOG.info(lan["LOG_SM_PitchRandom_FAIL"][L])
+
+                    # Set WAV Stream
+                    if ifStream == "True":
+                        args = {
+                            "object": TarActorPath + "\\" + NamePool[1][3] + "\\" + MPSwitchList[j] + "\\" + NamePool[2]["Tail"][i],
+                            "property": "IsStreamingEnabled",
+                            "value": "true"
+                        }
+                        self.GO.call("ak.wwise.core.object.setProperty", args)
+
+        # Create a RandomContainer
+        args = {
+            "parent": TarActorPath,
+            "type": "RandomSequenceContainer",
+            "name": NamePool[1][1] + "_LP",
+            "onNameConflict": "merge",
+            "notes": NamePool[1][0]
+        }
+        result = self.GO.call("ak.wwise.core.object.create", args)
+        RandomContainerGUID = result.get("id", None)
+
+        if RandomContainerGUID is not None:
+            args = {
+                "object": RandomContainerGUID,
+                "property": "PlayMechanismStepOrContinuous",
+                "value": 0
+            }
+            self.GO.call("ak.wwise.core.object.setProperty", args)
+
+            args = {
+                "object": RandomContainerGUID,
+                "property": "PlayMechanismLoop",
+                "value": "true"
+            }
+            self.GO.call("ak.wwise.core.object.setProperty", args)
+
+            args = {
+                "object": RandomContainerGUID,
+                "property": "PlayMechanismSpecialTransitions",
+                "value": "true"
+            }
+            self.GO.call("ak.wwise.core.object.setProperty", args)
+
+            args = {
+                "object": RandomContainerGUID,
+                "property": "PlayMechanismSpecialTransitionsType",
+                "value": "3"
+            }
+            self.GO.call("ak.wwise.core.object.setProperty", args)
+
+            args = {
+                "object": RandomContainerGUID,
+                "property": "PlayMechanismSpecialTransitionsValue",
+                "value": "0.07"
+            }
+            self.GO.call("ak.wwise.core.object.setProperty", args)
+
+            # Create the Switch Container A
+            args = {
+                "parent": RandomContainerGUID,
+                "type": "SwitchContainer",
+                "name": NamePool[1][1],
+                "onNameConflict": "merge",
+                "notes": "GAGAGA"
+            }
+            result = self.GO.call("ak.wwise.core.object.create", args)
+            SwitchContainerGUID = result.get("id", None)
+
+            # Create Events
+            args = {
+                "parent": TarEventPath,
+                "type": "Event",
+                "name": NamePool[1][2] + "_LP",
+                "notes": NamePool[1][0],
+                "onNameConflict": "merge",
+                "children": [{
+                    "name": "",
+                    "type": "Action",
+                    "@ActionType": 1,
+                    "@Target": RandomContainerGUID
+                }]
+            }
+            self.GO.call("ak.wwise.core.object.create", args)
+
+            if SwitchContainerGUID is not None:
+                # Create Events
+                args = {
+                    "parent": TarEventPath,
+                    "type": "Event",
+                    "name": NamePool[1][2],
+                    "notes": NamePool[1][0],
+                    "onNameConflict": "merge",
+                    "children": [
+                        {
+                            "name": NamePool[1][2],
+                            "type": "Action",
+                            "@ActionType": 1,
+                            "@Target": SwitchContainerGUID
+                        },
+                        {
+                            "name": Fname + "_Tail",
+                            "type": "Action",
+                            "@ActionType": 1,
+                            "@Target": SwitchContainerGUID_Tail
+                        }
+                    ]
+                }
+                self.GO.call("ak.wwise.core.object.create", args)
+
+                # Set Property
+                args = {
+                    "object": SwitchContainerGUID,
+                    "reference": "SwitchGroupOrStateGroup",
+                    "value": MPSwitchGroupPath
+                }
+                self.GO.call("ak.wwise.core.object.setReference", args)
+
+                # Import Switch Container and Assign Switch
+                for i in range(len(MPSwitchList)):
+                    args = {
+                        "importOperation": "useExisting",
+                        "default": {},
+                        "imports": [{
+                            "importLanguage": "SFX",
+                            "@Volume": "0",
+                            "objectPath": TarActorPath + "\\" + NamePool[1][1] + "_LP\\" + NamePool[1][1] + "\\<Blend Container>" + MPSwitchList[i],
+                            "switchAssignation": MPSwitchList[i]
+                        }]
+                    }
+                    self.GO.call("ak.wwise.core.audio.import", args)
+
+                # Set the OverrideOutPutBus for NPC RandomContainer
+                args = {
+                    "object": TarActorPath + "\\" + NamePool[1][1] + "_LP\\" + NamePool[1][1] + "\\" + MPSwitchList[1],
+                    "property": "OverrideOutput",
+                    "value": "True"
+                }
+                self.GO.call("ak.wwise.core.object.setProperty", args)
+
+                # Set the OutputBUS for NPC RandomContainer
+                args = {
+                    "object": TarActorPath + "\\" + NamePool[1][1] + "_LP\\" + NamePool[1][1] + "\\" + MPSwitchList[1],
+                    "reference": "OutputBus",
+                    "value": NPCBusPath
+                }
+                self.GO.call("ak.wwise.core.object.setReference", args)
+
+                # Set Gen 3D Attenuation for All Parents
+                args = {
+                    "object": TarActorPath + "\\" + NamePool[1][1] + "_LP\\" + NamePool[1][1] + "\\" + MPSwitchList[1],
+                    "property": "OverridePositioning",
+                    "value": "True"
+                }
+                self.GO.call("ak.wwise.core.object.setProperty", args)
+
+                args = {
+                    "object": TarActorPath + "\\" + NamePool[1][1] + "_LP\\" + NamePool[1][1] + "\\" + MPSwitchList[1],
+                    "property": "3DSpatialization",
+                    "value": "2"
+                }
+                self.GO.call("ak.wwise.core.object.setProperty", args)
+
+                args = {
+                    "object": TarActorPath + "\\" + NamePool[1][1] + "_LP\\" + NamePool[1][1] + "\\" + MPSwitchList[1],
+                    "reference": "Attenuation",
+                    "value": AttenuationPath
+                }
+                self.GO.call("ak.wwise.core.object.setReference", args)
+
+                args = {
+                    "parent": TarEventPath,
+                    "type": "Event",
+                    "name": "Stop_" + NamePool[1][1] + "_LP",
+                    "notes": "Stop_" + NamePool[1][1] + "_LP",
+                    "onNameConflict": "merge",
+                    "children": [
+                        {
+                            "name": "Stop_" + NamePool[1][1] + "_LP",
+                            "type": "Action",
+                            "@ActionType": 34,
+                            "@Target": RandomContainerGUID
+                        },
+                        {
+                            "name": NamePool[1][3],
+                            "type": "Action",
+                            "@ActionType": 1,
+                            "@Target": SwitchContainerGUID_Tail
+                        }
+                    ]
+                }
+                self.GO.call("ak.wwise.core.object.create", args)
+
+                # Create Random Containers
+                for name in FireName_PC:
+                    args = {
+                        "parent": TarActorPath + "\\" + NamePool[1][1] + "_LP\\" + NamePool[1][1] + "\\" + MPSwitchList[0],
+                        "type": "RandomSequenceContainer",
+                        "name": name,
+                        "onNameConflict": "merge",
+                        "notes": ""
+                    }
+                    self.GO.call("ak.wwise.core.object.create", args)
+
+                    for i in NamePool[2][name]:
+                        args = {
+                            "importOperation": "useExisting",
+                            "default": {"importLanguage": "SFX"},
+                            "imports": [{
+                                "audioFile": SourceWAVPath + i + ".wav",
+                                "objectPath": TarActorPath + "\\" + NamePool[1][1] + "_LP\\" + NamePool[1][1] + "\\" + MPSwitchList[0] + "\\" + name + "\\<Sound SFX>" + i
+                            }]
+                        }
+                        self.GO.call("ak.wwise.core.audio.import", args)
+                        LOG.info(lan["LOG_WG_HeadTip_DONE"][L] + str(NamePool[2][name]) + lan["LOG_WG_def_ImportWAVForContainer"][L])
+
+                        # Set Randomizer for RandomContainer
+                        if ifPitchRandom == "True":
+                            args = {
+                                "object": TarActorPath + "\\" + NamePool[1][1] + "_LP\\" + NamePool[1][1] + "\\" + MPSwitchList[0] + "\\" + name + "\\" + i,
+                                "property": "Pitch",
+                                "enabled": True,
+                                "min": KeyInfoDict["InitPitchRandomMin"],
+                                "max": KeyInfoDict["InitPitchRandomMax"]
+                            }
+                            result = self.GO.call("ak.wwise.core.object.setRandomizer", args)
+                            if result is None:
+                                LOG.info(lan["LOG_SM_PitchRandom_FAIL"][L])
+
+                        # Set WAV Stream
+                        if ifStream == "True":
+                            args = {
+                                "object": TarActorPath + "\\" + NamePool[1][1] + "_LP\\" + NamePool[1][1] + "\\" + MPSwitchList[0] + "\\" + name + "\\" + i,
+                                "property": "IsStreamingEnabled",
+                                "value": "true"
+                            }
+                            self.GO.call("ak.wwise.core.object.setProperty", args)
+
+                for name in FireName_NPC:
+                    args = {
+                        "parent": TarActorPath + "\\" + NamePool[1][1] + "_LP\\" + NamePool[1][1] + "\\" + MPSwitchList[1],
+                        "type": "RandomSequenceContainer",
+                        "name": name,
+                        "onNameConflict": "merge",
+                        "notes": ""
+                    }
+                    self.GO.call("ak.wwise.core.object.create", args)
+
+                    for i in NamePool[2][name]:
+                        args = {
+                            "importOperation": "useExisting",
+                            "default": {"importLanguage": "SFX"},
+                            "imports": [{
+                                "audioFile": SourceWAVPath + i + ".wav",
+                                "objectPath": TarActorPath + "\\" + NamePool[1][1] + "_LP\\" + NamePool[1][1] + "\\" + MPSwitchList[1] + "\\" + name + "\\<Sound SFX>" + i
+                            }]
+                        }
+                        self.GO.call("ak.wwise.core.audio.import", args)
+                        LOG.info(lan["LOG_WG_HeadTip_DONE"][L] + str(NamePool[2][name]) + lan["LOG_WG_def_ImportWAVForContainer"][L])
+
+                        # Set Randomizer for RandomContainer
+                        if ifPitchRandom == "True":
+                            args = {
+                                "object": TarActorPath + "\\" + NamePool[1][1] + "_LP\\" + NamePool[1][1] + "\\" + MPSwitchList[1] + "\\" + name + "\\" + i,
+                                "property": "Pitch",
+                                "enabled": True,
+                                "min": KeyInfoDict["InitPitchRandomMin"],
+                                "max": KeyInfoDict["InitPitchRandomMax"]
+                            }
+                            result = self.GO.call("ak.wwise.core.object.setRandomizer", args)
+                            if result is None:
+                                LOG.info(lan["LOG_SM_PitchRandom_FAIL"][L])
+
+                        # Set WAV Stream
+                        if ifStream == "True":
+                            args = {
+                                "object": TarActorPath + "\\" + NamePool[1][1] + "_LP\\" + NamePool[1][1] + "\\" + MPSwitchList[1] + "\\" + name + "\\" + i,
+                                "property": "IsStreamingEnabled",
+                                "value": "true"
+                            }
+                            self.GO.call("ak.wwise.core.object.setProperty", args)
 
         # Save the Project
         args = {}
@@ -2371,7 +2789,7 @@ class SimpleWaapi:
                     "type": "Action",
                     "@ActionType": 2,
                     "@Target": TarActorPath + "\\" + NamePool[1][1],
-                    "@FadeTime": 2.5
+                    "@FadeTime": 0.5
                 }]
             }
             self.GO.call("ak.wwise.core.object.create", args)
@@ -2597,7 +3015,7 @@ class SimpleWaapi:
                     "type": "Action",
                     "@ActionType": 2,
                     "@Target": TarActorPath + "\\" + NamePool[1][1],
-                    "@FadeTime": 2.5
+                    "@FadeTime": 0.5
                 }]
             }
             self.GO.call("ak.wwise.core.object.create", args)
@@ -2716,7 +3134,7 @@ class SimpleWaapi:
                                 "type": "Action",
                                 "@ActionType": 2,
                                 "@Target": TarActorPath + "\\" + NamePool[1][1],
-                                "@FadeTime": 2.5
+                                "@FadeTime": 0.5
                             }]
                         }
                         self.GO.call("ak.wwise.core.object.create", args)
@@ -2834,7 +3252,7 @@ class SimpleWaapi:
                                 "type": "Action",
                                 "@ActionType": 2,
                                 "@Target": TarActorPath + "\\" + NamePool[1][1],
-                                "@FadeTime": 2.5
+                                "@FadeTime": 0.5
                             }]
                         }
                         self.GO.call("ak.wwise.core.object.create", args)
@@ -3153,7 +3571,7 @@ class SimpleWaapi:
                 LOG.info(lan["LOG_WG_def_SetInitConversion"][L])
 
         # Set Gen 3D Attenuation for All Parents
-        if KeyDict["Structure_Type"] not in ["type2d", "type3d", "type2d_vo"]:  # 这三类的主ActorMixer上不可以设置衰减，衰减需要安排在必要的子分支上
+        if KeyDict["Structure_Type"] not in ["type2d", "type3d", "type2d_vo", "type2d_gun"]:  # 这三类的主ActorMixer上不可以设置衰减，衰减需要安排在必要的子分支上
             if len(KeyDict["Property_Positioning"]) == 0:
                 pass
             else:
@@ -4573,6 +4991,17 @@ class SimpleWaapi:
             else:
                 finalNameStr.append(EventStr)
 
+            # 判断type类型是否为gun，如果是，则安排Tail命名组
+            ObjRefStr_Tail = ObjRefStr + "_Tail"
+            TypeValue = KeyInfoDict["Data_KeyInfo"][fName]["Structure_Type"]
+            if TypeValue in key["ValidTypeStr"] and TypeValue == "type2d_gun":
+                # 不允许type2d_gun的命名末尾有“_LP”，在这里做一个安全检查
+                if ObjRefStr[-3:] == "_LP":
+                    namingError.append(lan["LOG_NSG_def_nameStrGen_LPnotallowed"][L] + " --> " + str(ObjRefStr))
+                    # LOG.info(lan["LOG_NSG_def_nameStrGen_LPnotallowed"][L] + " --> " + str(ObjRefStr))
+                else:
+                    finalNameStr.append(ObjRefStr_Tail)
+
             # 查看namingError是否有报错信息，如果没有，则继续进一步检查类型，准备生成sfx大礼包
             if len(namingError) == 0:
                 # 获取type值，检查type值是否在合法范围内，如果在，继续下一步sfx生成
@@ -4649,6 +5078,34 @@ class SimpleWaapi:
                                 ObjRefStr = ObjRefStr + "_0" + str(i)
                                 sfxContainerStr.append(ObjRefStr)
                                 ObjRefStr = ObjRefStr[:-3]
+
+                    # type2d_gun类型生成SFX命名大礼包
+                    elif TypeValue == "type2d_gun":
+                        sfxContainerStr = {"Tail":[]}
+                        for obj in key["ValidGunLayer"]["PC"]:
+                            sfxContainerStr[obj] = []
+                            # sfxContainerStr = {
+                            #     "Fire": [],
+                            #     "Mech": [],
+                            #     "Sub": [],
+                            #     "Sweetener": [],
+                            #     "Transient": [],
+                            #     "Tail": []
+                            # }
+                        # 添加判断，如果type类型是type2d_gun，则移除命名末尾的“LP”
+                        TypeValue = KeyInfoDict["Data_KeyInfo"][fName]["Structure_Type"]
+                        if TypeValue in key["ValidTypeStr"] and TypeValue == "type2d_gun":
+                            if ObjRefStr[-3:] == "_LP":
+                                ObjRefStr = ObjRefStr[:-3]
+
+                        subStrList = list(sfxContainerStr.keys())
+                        for subStr in subStrList:
+                            for i in range(1, int(ranNum) + 1):
+                                # 随机数大于1的情况
+                                if 0 < int(ranNum) < 9:
+                                    ObjRefStr = ObjRefStr + "_" + subStr + "_0" + str(i)
+                                    sfxContainerStr[subStr].append(ObjRefStr)
+                                    ObjRefStr = ObjRefStr[:-(4 + len(subStr))]
 
                     # Value --> ValidTypeList --> WaapiGoFunc 不匹配提示
                     else:
@@ -4828,6 +5285,34 @@ class SimpleWaapi:
                                 sfxContainerStr.append(ObjRefStr)
                                 ObjRefStr = ObjRefStr[:-3]
 
+                    # type2d_gun类型生成SFX命名大礼包
+                    elif TypeValue == "type2d_gun":
+                        sfxContainerStr = {"Tail":[]}
+                        for obj in key["ValidGunLayer"]["PC"]:
+                            sfxContainerStr[obj] = []
+                            # sfxContainerStr = {
+                            #     "Fire": [],
+                            #     "Mech": [],
+                            #     "Sub": [],
+                            #     "Sweetener": [],
+                            #     "Transient": [],
+                            #     "Tail": []
+                            # }
+                        # 添加判断，如果type类型是type2d_gun，则移除命名末尾的“LP”
+                        TypeValue = KeyInfoDict["Data_KeyInfo"][fName]["Structure_Type"]
+                        if TypeValue in key["ValidTypeStr"] and TypeValue == "type2d_gun":
+                            if ObjRefStr[-3:] == "_LP":
+                                ObjRefStr = ObjRefStr[:-3]
+
+                        subStrList = list(sfxContainerStr.keys())
+                        for subStr in subStrList:
+                            for i in range(1, int(ranNum) + 1):
+                                # 随机数大于1的情况
+                                if 0 < int(ranNum) < 9:
+                                    ObjRefStr = ObjRefStr + "_" + subStr + "_0" + str(i)
+                                    sfxContainerStr[subStr].append(ObjRefStr)
+                                    ObjRefStr = ObjRefStr[:-(4 + len(subStr))]
+
                     # Value --> ValidTypeList --> WaapiGoFunc 不匹配提示
                     else:
                         LOG.warning(lan["LOG_NSG_def_nameStrGen_ValidTypeListOutOfDate"][L])
@@ -4880,6 +5365,13 @@ class SimpleWaapi:
                             ADVErrorLogA = ADVQuickCopy(Path_File_PlaceholderWAV, langInfo["folderPath"], i)
                             if len(ADVErrorLogA) != 0:
                                 wavGenError.append(ADVErrorLogA)
+            elif typeStr == "type2d_gun":
+                for sublist in qq[2].values():
+                    for i in sublist:
+                        i = i + ".wav"
+                        ADVErrorLogA = ADVQuickCopy(Path_File_PlaceholderWAV, Path_Folder_TargetWAV, i)
+                        if len(ADVErrorLogA) != 0:
+                            wavGenError.append(ADVErrorLogA)
             else:
                 for i in qq[2]:
                     i = i + ".wav"

@@ -1,3 +1,4 @@
+import logging
 import os
 import traceback
 
@@ -278,6 +279,8 @@ class Window_KeyInfo(QWidget):
                             self.comboBox_Structure_Type.setCurrentIndex(5)
                         elif Structure_Type == "type2d_vo":
                             self.comboBox_Structure_Type.setCurrentIndex(6)
+                        elif Structure_Type == "type2d_gun":
+                            self.comboBox_Structure_Type.setCurrentIndex(7)
                         else:
                             self.comboBox_Structure_Type.setCurrentIndex(0)
                     else:
@@ -478,6 +481,8 @@ class Window_KeyInfo(QWidget):
                             currentText = "type1d_vo"
                         elif currentIndex == 6:
                             currentText = "type2d_vo"
+                        elif currentIndex == 7:
+                            currentText = "type2d_gun"
                         else:
                             currentText = "None"
 
@@ -613,7 +618,14 @@ class Window_KeyInfo(QWidget):
                                 # self.label_statusMsg.setText(lan["GUI_LOG_CharAlreadyExist"][L])
                                 LOG.warning(lan["GUI_LOG_CharAlreadyExist"][L])
                             else:  # 如果安全检查通过，生成空{}框架，加入总Dict
-                                KeyInfoDict["Data_KeyInfo"][newKeyStr] = KeyInfoDict["Data_KeyInfo"][selectedKeyStr]
+                                KeyInfoDict["Data_KeyInfo"][newKeyStr] = KeyInfoDict["Data_KeyInfo"][selectedKeyStr].copy()
+
+                                # 将3个wwu路径替换为新的目标路径
+                                KeyInfoDict["Data_KeyInfo"][newKeyStr]["Path_InWwise_TargetActorMixer"] = "\\Actor-Mixer Hierarchy\\Audio_" + newKeyStr + "\\" + newKeyStr
+                                KeyInfoDict["Data_KeyInfo"][newKeyStr]["Path_InWwise_TargetEvent"] = "\\Events\\Event_" + newKeyStr
+                                KeyInfoDict["Data_KeyInfo"][newKeyStr]["Path_InWwise_TargetBank"] = "\\SoundBanks\\Bank_" + newKeyStr + "\\Bank_" + newKeyStr
+
+                                # 保存结果
                                 SaveJson(KeyInfoDict, global_curWwiseBaseJson)
 
                                 # 重新加载listWidget_KeyStrList，刷新列表显示，并高亮到新增的对象上
@@ -993,7 +1005,7 @@ class Window_KeyInfo(QWidget):
 
             self.label_Property_ifStream.setVisible(True)
             self.comboBox_Property_ifStream.setVisible(True)
-        elif typeValue == "type2d_vo":
+        elif typeValue == "type2d_vo" or typeValue == "type2d_gun":
             self.label_Path_InWwise_UserDefinedTemplate.setVisible(False)
             self.lineEdit_Path_InWwise_UserDefinedTemplate.setVisible(False)
 

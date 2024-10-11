@@ -9,7 +9,7 @@ from xml.etree.ElementTree import QName, fromstring
 from globals import *
 
 
-class ThemeColorConverter:  # 这个类代码转载于：https://blog.csdn.net/as604049322/article/details/134470419  本内容依据“CC BY-SA 4.0”许可证进行授权。要查看该许可证，可访问https://creativecommons.org/licenses/by-sa/4.0/
+class ThemeColorConverter:  # 这部分代码转载于：https://blog.csdn.net/as604049322/article/details/134470419  本内容依据“CC BY-SA 4.0”许可证进行授权。要查看该许可证，可访问https://creativecommons.org/licenses/by-sa/4.0/
     RGBMAX = 0xff
     HLSMAX = 240
 
@@ -212,18 +212,21 @@ class SimpleXLSX:
     def get_cell_color_Font(self, cell):
         cell = self.ws[cell]
         color = cell.font.color
-        if color.type == "rgb":
-            if color.rgb == "00000000":
-                return "#FFFFFF"
+        if color is not None:
+            if color.type == "rgb":
+                if color.rgb == "00000000":
+                    return "#FFFFFF"
+                else:
+                    return "#" + color.rgb[2:]
+            elif color.type == "indexed":
+                color_index = color.indexed
+                if color_index is None or color_index < len(COLOR_INDEX):
+                    raise Exception("Invalid indexed color")
+                return COLOR_INDEX[color_index]
+            elif color.type == "theme":
+                theme_color = ThemeColorConverter(self.wb).theme_and_tint_to_rgb(color.theme, color.tint)
+                return "#" + theme_color
             else:
-                return "#" + color.rgb[2:]
-        elif color.type == "indexed":
-            color_index = color.indexed
-            if color_index is None or color_index < len(COLOR_INDEX):
-                raise Exception("Invalid indexed color")
-            return COLOR_INDEX[color_index]
-        elif color.type == "theme":
-            theme_color = ThemeColorConverter(self.wb).theme_and_tint_to_rgb(color.theme, color.tint)
-            return "#" + theme_color
+                raise Exception(f"Other type: {color.type}")
         else:
-            raise Exception(f"Other type: {color.type}")
+            return "#000000"

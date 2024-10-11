@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>1011</width>
-    <height>869</height>
+    <height>911</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -374,6 +374,11 @@
               <item>
                <property name="text">
                 <string>type2d_vo</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>type2d_gun</string>
                </property>
               </item>
              </widget>

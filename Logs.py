@@ -221,6 +221,10 @@ lan = {
         "English": "Clear",
         "Chinese": "清除"
     },
+    "GUI_action_Order": {
+        "English": "Sort",
+        "Chinese": "排序"
+    },
     "GUI_action_GlobalSafetyCheck": {
         "English": "Global Safety Check",
         "Chinese": "全量安全检查"
@@ -454,8 +458,8 @@ lan = {
         "Chinese": "更新Event的Notes"
     },
     "GUI_SM_RC_action_RenewNotesForEvents_Mark": {
-        "English": "\n[Renew Notes] Line: ",
-        "Chinese": "\n[更新Event的Notes] 行："
+        "English": "\n[Renew Notes]",
+        "Chinese": "\n[更新Event的Notes]"
     },
     "GUI_SM_RC_action_CheckWAVSilence": {
         "English": "Check Silence",
@@ -794,6 +798,10 @@ lan = {
         "English": "KeyName is INVALID! -----> SKIPPED!",
         "Chinese": "KeyName不合法！ -----> 跳过！"
     },
+    "LOG_NSG_def_nameStrGen_type2dgunNotAvalible_Skip": {
+        "English": "Type type2d_gun is NOT AVALIBLE for this function! -----> SKIPPED!",
+        "Chinese": "type2d_gun类型不支持执行该功能！ -----> 跳过！"
+    },
     "LOG_NSG_def_nameStrGen_DuplicatedActor": {
         "English": "[DUPLICATED Actor] --> ",
         "Chinese": "[已存在的Actor对象]"
@@ -801,6 +809,10 @@ lan = {
     "LOG_NSG_def_nameStrGen_DuplicatedEvent": {
         "English": "[DUPLICATED Event] --> ",
         "Chinese": "[已存在的Event对象]"
+    },
+    "LOG_NSG_def_nameStrGen_LPnotallowed": {
+        "English": "[Warning] type2d_gun does not allow \"_LP\" been the tail of the original name, because the process will create a object with a name that inclued LP.",
+        "Chinese": "[警告] type2d_gun的原始命名，不允许以\"_LP\"结尾，因为流程中会自动生成一个带有LP的对象。"
     },
     "LOG_NSG_def_nameStrGen_ValidTypeListOutOfDate": {
         "English": "Valid Type List is Out Of Date!",
@@ -1451,8 +1463,8 @@ lan = {
         "Chinese": "[警告] ID缺失的行: "
     },
     "GUI_LOG_InvalidIDLine": {
-        "English": "[Warning] Duplicated ID --> ",
-        "Chinese": "[警告] 检测到重复ID -->  "
+        "English": "[Warning] Invalid ID --> ",
+        "Chinese": "[警告] 检测到非法ID -->  "
     },
     "GUI_LOG_InvalidSoundListJson": {
         "English": "[Warning] Invalid SoundList json file --> ",
@@ -1501,6 +1513,10 @@ lan = {
     "GUI_LOG_NotSavedYet_PreCheckBeforeImplement_Title": {
         "English": "Save Status Check - Before Implement",
         "Chinese": "保存状态检查 - 整合前"
+    },
+    "GUI_LOG_NotSavedYet_PreCheckBeforeSorting_Title": {
+        "English": "Save Status Check - Before Sorting",
+        "Chinese": "保存状态检查 - 排序前"
     },
     "GUI_LOG_NotSavedYet_PreCheckBeforeImplement_Text": {
         "English": "Sound List Data has not been saved yet!\nPlease SAVE first!",
@@ -1603,8 +1619,8 @@ lan = {
         "Chinese": " --> 在Event结构规则之外！无法参与安全检查！"
     },
     "LOG_SC_def_Warning_OutOfObjectRefStructureRule": {
-        "English": " --> Out of ObjectRef Structure Rule! Can not participate in Safety Check!",
-        "Chinese": " --> 在ObjectRef结构规则之外！无法参与安全检查！"
+        "English": " --> Out of ObjectRef Structure Rule! (If it is a type of type2d_gun, current warning can be ignored.)",
+        "Chinese": " --> 在ObjectRef结构规则之外！（若属于type2d_gun类型，当前警告可忽略）"
     },
     "LOG_SM_def_SafetyCheck": {
         "English": "[Done] Safety Check PASSED ^_^",
@@ -1745,5 +1761,21 @@ lan = {
     "LOG_DoesNotSupportCut": {
         "English": "[Notice] Current Version does not support CUT CELL!",
         "Chinese": "[提示] 当前版本暂不支持剪切单元格！"
+    },
+    "GUI_LOG_OrderCanNotBeRedo_Title": {
+        "English": "Alert before Sorting",
+        "Chinese": "排序前提示"
+    },
+    "GUI_LOG_OrderCanNotBeRedo_Text": {
+        "English": "Sorting can not be UNDO, and UNDO/REDO record will be cleared!\nAre you sure?",
+        "Chinese": "排序后无法撤销，且撤销和重做记录将被清零！\n确定继续？"
+    },
+    "GUI_LOG_Ordered_Done": {
+        "English": "[Done] Sorting is finished. Please check the results! ^_^",
+        "Chinese": "[完成] 排序已完成，请查看排序结果！ ^_^"
+    },
+    "GUI_LOG_Ordered_Cancel": {
+        "English": "[Notice] Only 1 target column can be selected as the sorting reference!",
+        "Chinese": "[提示] 作为排序参考系的列必须是某1行！"
     }
 }
