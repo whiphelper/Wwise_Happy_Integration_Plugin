@@ -91,6 +91,25 @@ class SimpleWaapi:
         except:
             return None
 
+    def get_WorkUnitPath_From_ObjectRefWorkUnitID(self, ObjectRef_WorkUnitID):
+        if ObjectRef_WorkUnitID is not None:
+            args = {
+                "from": {
+                    "id": [ObjectRef_WorkUnitID]
+                },
+                "options": {
+                    "return": ["filePath"]
+                }
+            }
+            Results = self.GO.call("ak.wwise.core.object.get", args)
+            try:
+                ActorWwuPath = Results["return"][0]["filePath"]
+                return ActorWwuPath
+            except:
+                return None
+        else:
+            return None
+
     def Get_AllWAVPath_From_EventName_InActionLayer(self, EventStr):
         WwiseProjectFolderPath = global_curWwisePath
         EventRootCups = {}
@@ -232,7 +251,7 @@ class SimpleWaapi:
         SchemaVersion = ""
         path = self.get_FolderPath_WwiseCurrentProjectPath()
         if len(path) != 0:
-            tree = ET.parse(path + "\\Master-Mixer Hierarchy\\Default Work Unit.wwu")
+            tree = ET.parse(path + "\\SoundBanks\\Default Work Unit.wwu")
             root = tree.getroot()
 
             for item in root.iter("WwiseDocument"):
@@ -489,7 +508,7 @@ class SimpleWaapi:
         if self.GO is not None:
             # 定义合法的targetTypeStr
             if targetTypeStr == "BUS":
-                tarRootPath = "\\Master-Mixer Hierarchy"
+                tarRootPath = "\\" + global_busString
                 validTypeStrList = ["Bus", "AuxBus"]
             elif targetTypeStr == "SWITCH":
                 tarRootPath = "\\Switches"
@@ -553,6 +572,78 @@ class SimpleWaapi:
                 return PATHList
             except:
                 return None
+
+    def get_Paths_of_Ancestors(self, GUID):
+        args = {
+            "from": {
+                "id": [GUID]
+            },
+            "transform": [{
+                "select": ["ancestors"]
+            }],
+            "options": {
+                "return": ["path", "type", "id", "name", "filePath"]
+            }
+        }
+        result = self.GO.call("ak.wwise.core.object.get", args)
+        if result is not None:
+            return result["return"]
+        else:
+            return None
+
+    def get_Paths_of_Children(self, GUID):
+        args = {
+            "from": {
+                "id": [GUID]
+            },
+            "transform": [{
+                "select": ["children"]
+            }],
+            "options": {
+                "return": ["path", "type", "id", "name", "filePath"]
+            }
+        }
+        result = self.GO.call("ak.wwise.core.object.get", args)
+        if result is not None:
+            return result["return"]
+        else:
+            return None
+
+    def get_Paths_of_referencesTo(self, GUID):
+        args = {
+            "from": {
+                "id": [GUID]
+            },
+            "transform": [{
+                "select": ["referencesTo"]
+            }],
+            "options": {
+                "return": ["path", "type", "id", "name", "filePath"]
+            }
+        }
+        result = self.GO.call("ak.wwise.core.object.get", args)
+        if result is not None:
+            return result["return"]
+        else:
+            return None
+
+    def get_Paths_of_DescendantChildren(self, GUID):
+        args = {
+            "from": {
+                "id": [GUID]
+            },
+            "transform": [{
+                "select": ["descendants"]
+            }],
+            "options": {
+                "return": ["path", "type", "id", "name", "filePath"]
+            }
+        }
+        result = self.GO.call("ak.wwise.core.object.get", args)
+        if result is not None:
+            return result["return"]
+        else:
+            return None
 
     def get_Paths_of_Children_ForSwitchGroup(self, switchGroupPath):
         PATHList = []
@@ -721,6 +812,19 @@ class SimpleWaapi:
             }
             result = self.GO.call("ak.wwise.core.object.get", args)
             return result["return"][0]["type"]
+
+    def get_Value_From_GUID_By_KeyWord(self, GUID, KeyWord):
+        if self.GO is not None:
+            args = {
+                "from": {
+                    "id": [GUID]
+                },
+                "options": {
+                    "return": [KeyWord]
+                }
+            }
+            result = self.GO.call("ak.wwise.core.object.get", args)
+            return result["return"][0][KeyWord]
 
     def get_TargetTypeInfo_From_Path(self, path, targetTypeStr):
         if self.GO is not None:
@@ -1455,7 +1559,7 @@ class SimpleWaapi:
             }
         }
         ProjectPath = self.GO.call("ak.wwise.core.object.get", args)
-        TargetPath = str(os.path.dirname(ProjectPath["return"][0]["filePath"])) + "\\Actor-Mixer Hierarchy"
+        TargetPath = str(os.path.dirname(ProjectPath["return"][0]["filePath"])) + "\\" + global_actorString
         return TargetPath
 
     def get_CurrentWwiseSession_EventsWWUPath(self):
@@ -1758,6 +1862,1473 @@ class SimpleWaapi:
                     ObjectRefCups[valueee["ObjectRef"]["ID"]] = valueee["ObjectRef"]["Name"]
         # LOG.debug(ObjectRefCups)
         return ObjectRefCups
+
+    def SetUpFunc_UltraInfo_CreateEventStructure_OriDict(self):
+        eStructure = {
+            "ifEmpty": {"Bool": ""},  # 是否是空的Event
+            "ifBeenAssignedToBank": {"Bool": "", "Items": []},  # 是否有所属的Bank指派
+            "ifBankBeenModified": {"Bool": "", "Items": []},  # Bank是否被自定义过
+            "ifMultiAction": {"Bool": "", "Items": []},  # 是否包含多个Action
+            "ifMultiActionType": {"Bool": "", "Items": []},  # 是否存在多个ActionType
+            "ifSpecialActionType": {"Bool": "", "Items": []},  # 是否存在特殊的ActionType
+            "ifActionSelfParadox": {"Bool": "", "Items": []},  # 是否存在自相矛盾的Action
+            "ifChildrenBeenModified": {"Bool": "", "Items": []},  # 是否存在非默认值的子对象
+            "ifChildrenBeenModified_BUS_Ori": {"Bool": "", "Items": []},  # 是否存在非默认值的子对象(BUS专项检查)
+            "ifChildrenBeenModified_BUS": {"Bool": "", "Items": []},  # 是否存在非默认值的子对象(BUS专项检查)
+            "ifBeenRemoteAffected_ByActions": {"Bool": "", "Items": []},  # 是否受到其他Event中Action的影响（全局总计）（例如：Stop或Break对Play的遥控、Resume对Pause的遥控）
+            "ifBeenRemoteAffected_ByVariables": {"Bool": "", "Items": []},  # 是否受到任何变量的动态传参影响（全局总计）（例如：Switch、State、RTPC、Meter等对Property的遥控，或VoiceLimit、Threshold等其他类型）
+            "EstimateTotalLoudnessRange": [],  # 响度值区间
+            "ActionList": {}
+        }
+        return eStructure
+
+    def SetUpFunc_UltraInfo_CreateEventStructure(self, EventStr):
+        event_info_dict = {}
+        # 通过EventStr获得Event所在wwu的路径
+        eventWwuPath = self.get_wwuPath_From_EventName(EventStr)
+        if eventWwuPath is not None:
+            tree = ET.parse(eventWwuPath)
+            root = tree.getroot()
+            # Event层
+            for EventNames in root.iter("Event"):
+                tarName = EventNames.attrib.get("Name")
+                tarID = EventNames.attrib.get("ID")
+                if tarName == EventStr:
+                    event_info_dict[tarName] = self.SetUpFunc_UltraInfo_CreateEventStructure_OriDict()
+                    return {"event_info_dict": event_info_dict, "tarName": tarName, "tarID": tarID, "EventNameNode": EventNames}
+
+    def SetUpFunc_UltraInfo_CreateActionStructure(self):
+        actStructure = {
+            "ifModified": {"Bool": "", "Property": []},  # 是否存在非默认值（Action框架）
+            "ifBeenRemoteAffected": {"Bool": "", "Items": []},  # 是否受到其他Event中Action的影响（局部统计）（例如：Stop或Break对Play的遥控、Resume对Pause的遥控）
+            "-------": "-------",
+            "Type": "",
+            "ObjectRef": {
+                "ifModified": {"Bool": "", "Property": [], "Reference": []},  # 是否存在非默认值（ObjectRef框架）
+                "ifBeenRemoteAffected": {"Bool": "", "Items": []},  # 是否受到任何变量的动态传参影响（局部统计）（例如：Switch、State、RTPC、Meter等对Property的遥控，或VoiceLimit、Threshold等其他类型）
+                "-------": "-------",
+                "id": "",
+                "type": "",
+                "name": "",
+                "path": "",
+                "filePath": "",
+                "Parents": [],
+                "Children": []
+            }
+        }
+        return actStructure
+
+    def SetUpFunc_UltraInfo_AnalyseInfo(self, AncestorsList, event_info_dict, tarName, ActionGUID):
+        # 抓取最父级容器类型提前标记
+        parMark = 0
+        for ancestor in AncestorsList:
+            ancestor["ifModified"] = {"Bool": "", "Property": [], "Reference": []}
+            ancestor["ifBeenRemoteAffected"] = {"Bool": "", "Items": []}
+            if os.path.isdir(ancestor["filePath"]):  # 避开实体文件夹对象
+                pass
+            else:
+                tree = ET.parse(ancestor["filePath"])
+                root = tree.getroot()
+                for elem in root.iter("WwiseDocument"):
+                    for child in elem.iter():
+                        if "ID" in child.attrib and "Name" in child.attrib:
+                            if child.attrib.get("Name") == ancestor["name"] and child.attrib.get("ID") == ancestor["id"]:
+                                # 到这里，说明找到了目标ObjectRef，可继续查询ObjectRef极其父级的PropertyList、ReferenceList、StateInfo
+                                for obja in child:
+                                    for PropertyItem in obja:
+                                        PropertyListGroup = {"Name": "", "Value": "", "Child": []}
+                                        if PropertyItem.tag == "Property":
+                                            PropertyListGroup["Name"] = PropertyItem.attrib.get("Name")
+                                            if len(PropertyItem) == 0:
+                                                PropertyListGroup["Value"] = PropertyItem.attrib.get("Value")
+                                                # 在这里排除Voice、Sequence的类型
+                                                if PropertyItem.attrib.get("Name") not in ["IsVoice", "RandomOrSequence"]:
+                                                    ancestor["ifModified"]["Property"].append(PropertyListGroup)
+                                            else:
+                                                for secChild in PropertyItem:
+                                                    for values in secChild:
+                                                        if secChild.tag == "ValueList":  # 检测到是一个Value值
+                                                            valueList = []
+                                                            for value in values.iter("Value"):
+                                                                valueList.append(value.text)
+                                                            if len(valueList) == 1:
+                                                                PropertyListGroup["Value"] = valueList[0]
+                                                            elif len(valueList) > 1:
+                                                                PropertyListGroup["Value"] = valueList
+                                                            # secChildDict["Value"] = values.text
+                                                        elif secChild.tag == "RTPCList":  # 检测到有RTPC参与
+                                                            secChildList = []
+                                                            for RTPCItem in secChild:
+                                                                rtpcDict = {"Name": "", "ID": "", "Curve": []}
+                                                                for rtpcObjectRef in RTPCItem.iter("ObjectRef"):
+                                                                    rtpcDict["Name"] = rtpcObjectRef.attrib.get("Name")
+                                                                    rtpcDict["ID"] = rtpcObjectRef.attrib.get("ID")
+                                                                for rtpcCurves in RTPCItem.iter("Curve"):
+                                                                    for point in rtpcCurves.iter("Point"):
+                                                                        rtpcDict["Curve"].append([point[0].text, point[1].text, point[2].text])
+                                                                secChildList.append(rtpcDict)
+                                                            PropertyListGroup["Child"] = secChildList
+
+                                                ancestor["ifModified"]["Property"].append(PropertyListGroup)
+
+                                if parMark == 1 and ancestor["type"] != "WorkUnit" and ancestor["type"] != "Folder":
+                                    # 在这里需要根据Override的情况，来移除无效的变更（因为wwu里有时候有变更，但父级如果没有处于Override状态时，相关的数据不生效）
+                                    tempPropertyNameList = []
+                                    for xxx in ancestor["ifModified"]["Property"]:
+                                        tempPropertyNameList.append(xxx["Name"])
+
+                                    readyToBeRemoved = []
+                                    for item in ancestor["ifModified"]["Property"]:
+                                        if item["Name"] in global_OverrideKeywordDict:
+                                            if global_OverrideKeywordDict[item["Name"]] not in tempPropertyNameList:
+                                                readyToBeRemoved.append(item)
+
+                                    ancestor["ifModified"]["Property"] = [x for x in ancestor["ifModified"]["Property"] if x not in readyToBeRemoved]
+
+                                for objb in child:
+                                    for ReferenceList in objb:
+                                        if ReferenceList.tag == "Reference":
+                                            curRefName = ReferenceList.attrib.get("Name")
+                                            for childd in ReferenceList:
+                                                # 在这里要补充判断，因为可能它的信息还在Custom-CreatedFrom子对象里
+                                                curObjRefName = childd.attrib.get("Name")
+                                                curObjRefID = childd.attrib.get("ID")
+                                                curObjRefProperty = []
+                                                if curObjRefID is None:  # 说明存在custom相关的子对象，需要进一步获取细节信息
+                                                    for actualItem in childd:
+                                                        actualItem_Name = actualItem.attrib.get("Name")
+                                                        actualItem_ID = actualItem.attrib.get("ID")
+                                                        if actualItem_Name is not None and actualItem_ID is not None:  # 说明找到了Custom子对象
+                                                            curObjRefName = actualItem_Name
+                                                            curObjRefID = actualItem_ID
+
+                                                        # 进一步针对Attenuation和Conversion类型做出Property的区别归纳
+                                                        if actualItem.tag == "Conversion":
+                                                            for PropertyItem in actualItem.iter("Property"):
+                                                                PropertyListGroup = {"Name": PropertyItem.attrib.get("Name"), "Type": PropertyItem.attrib.get("Type"), "ValueList": []}
+                                                                if len(PropertyItem) == 0:
+                                                                    pass
+                                                                else:
+                                                                    for secChild in PropertyItem.iter("Value"):
+                                                                        secChildDict = {"Value": secChild.text, "Platform": secChild.attrib.get("Platform")}
+                                                                        PropertyListGroup["ValueList"].append(secChildDict)
+                                                                curObjRefProperty.append(PropertyListGroup)
+
+                                                            for PropertyItem in actualItem.iter("ConversionPluginInfo"):
+                                                                ConversionPluginInfoDict = {"Platform": PropertyItem.attrib.get("Platform"), "ConversionPlugin": []}
+                                                                for ConversionPlugin in PropertyItem.iter("ConversionPlugin"):
+                                                                    ConversionPluginInfo = {"Name": ConversionPlugin.attrib.get("Name"), "ID": ConversionPlugin.attrib.get("ID"), "PluginName": ConversionPlugin.attrib.get("PluginName"), "CompanyID": ConversionPlugin.attrib.get("CompanyID"),
+                                                                                            "PluginID": ConversionPlugin.attrib.get("PluginID")}
+                                                                    ConversionPluginInfoDict["ConversionPlugin"].append(ConversionPluginInfo)
+                                                                curObjRefProperty.append(ConversionPluginInfoDict)
+
+                                                        elif actualItem.tag == "Attenuation":
+                                                            for PropertyItems in actualItem.iter("PropertyList"):
+                                                                for PropertyItem in PropertyItems:
+                                                                    # 排除无用的Flags信息
+                                                                    curPropertyName = PropertyItem.attrib.get("Name")
+                                                                    if curPropertyName != "Flags":
+                                                                        PropertyListGroup = {"Name": curPropertyName, "Value": "", "Child": []}
+                                                                        if len(PropertyItem) == 0:  # 说明不存在ValueList和RTPCList，直接获取Value值即可
+                                                                            PropertyListGroup["Value"] = PropertyItem.attrib.get("Value")
+                                                                        else:  # 说明存在ValueList（或者RTPCList)
+                                                                            for secChild in PropertyItem:
+                                                                                if secChild.tag == "ValueList":  # 对于ValueList组而言
+                                                                                    valueList = []
+                                                                                    for values in secChild.iter("Value"):
+                                                                                        valueList.append(values.text)
+                                                                                    if len(valueList) == 1:
+                                                                                        PropertyListGroup["Value"] = valueList[0]
+                                                                                    elif len(valueList) > 1:
+                                                                                        PropertyListGroup["Value"] = valueList
+
+                                                                                elif secChild.tag == "RTPCList":  # 检测到有RTPC参与
+                                                                                    secChildDict = {"Type": secChild.tag, "Value": ""}
+                                                                                    # for values in secChild.iter("RTPCList"):
+                                                                                    rtpcDict = {"Name": "", "ID": "", "Curve": []}
+                                                                                    for rtpcObjectRef in secChild.iter("ObjectRef"):
+                                                                                        rtpcDict["Name"] = rtpcObjectRef.attrib.get("Name")
+                                                                                        rtpcDict["ID"] = rtpcObjectRef.attrib.get("ID")
+                                                                                    for rtpcCurves in secChild.iter("Curve"):
+                                                                                        for point in rtpcCurves.iter("Point"):
+                                                                                            rtpcDict["Curve"].append([point[0].text, point[1].text, point[2].text])
+                                                                                    secChildDict["Value"] = rtpcDict
+                                                                                    PropertyListGroup["Child"].append(secChildDict)
+                                                                        curObjRefProperty.append(PropertyListGroup)
+
+                                                            for listGroup in actualItem.iter("CurveUsageInfoList"):
+                                                                for obj in listGroup:
+                                                                    objTag = obj.tag
+                                                                    groupInfo = {"Type": objTag}
+                                                                    for CurveUsageInfo in obj:
+                                                                        groupInfo["Platform"] = CurveUsageInfo.attrib.get("Platform")
+                                                                        groupInfo["CurveToUse"] = CurveUsageInfo.attrib.get("CurveToUse")
+                                                                        # 如果还有子对象，说明有Curve的具体数据存在
+                                                                        if len(CurveUsageInfo) != 0:
+                                                                            for curveInfo in CurveUsageInfo:
+                                                                                curveName = curveInfo.attrib.get("Name")
+                                                                                curveID = curveInfo.attrib.get("ID")
+                                                                                curveRootInfo = {"Name": curveName, "ID": curveID, "PointList": []}
+                                                                                for point in curveInfo.iter("Point"):
+                                                                                    curveRootInfo["PointList"].append([point[0].text, point[1].text, point[2].text])
+                                                                                groupInfo["CurveInfo"] = curveRootInfo
+                                                                    curObjRefProperty.append(groupInfo)
+
+                                                if parMark == 1 and ancestor["type"] != "WorkUnit" and ancestor["type"] != "Folder":
+                                                    if curRefName in global_OverrideKeywordDict:
+                                                        # 需要补充判断PropertyList中是否是Override状态，否则即便有也等于是不生效的值，则不记录
+                                                        overrideMark = 0
+                                                        for item in ancestor["ifModified"]["Property"]:
+                                                            if item["Name"] == global_OverrideKeywordDict[curRefName]:
+                                                                overrideMark = 1
+
+                                                        if overrideMark == 1:
+                                                            ancestor["ifModified"]["Reference"].append({"Type": curRefName, "Name": curObjRefName, "ID": curObjRefID, "Property": curObjRefProperty})
+                                                    else:
+                                                        ancestor["ifModified"]["Reference"].append({"Type": curRefName, "Name": curObjRefName, "ID": curObjRefID, "Property": curObjRefProperty})
+                                                else:
+                                                    # 对ObjectRef的Reference进行默认值判断
+                                                    if curRefName == "Conversion":
+                                                        if curObjRefName == "Default Conversion Settings":
+                                                            pass
+                                                        else:
+                                                            ancestor["ifModified"]["Reference"].append({"Type": curRefName, "Name": curObjRefName, "ID": curObjRefID, "Property": curObjRefProperty})
+                                                    elif curRefName == "OutputBus":
+                                                        if curObjRefName == global_RootBusString:
+                                                            pass
+                                                        else:
+                                                            ancestor["ifModified"]["Reference"].append({"Type": curRefName, "Name": curObjRefName, "ID": curObjRefID, "Property": curObjRefProperty})
+                                                    elif curRefName == "AudioDevice":
+                                                        if curObjRefName == "System":
+                                                            pass
+                                                        else:
+                                                            ancestor["ifModified"]["Reference"].append({"Type": curRefName, "Name": curObjRefName, "ID": curObjRefID, "Property": curObjRefProperty})
+                                                    else:
+                                                        ancestor["ifModified"]["Reference"].append({"Type": curRefName, "Name": curObjRefName, "ID": curObjRefID, "Property": curObjRefProperty})
+
+                                for objc in child:
+                                    for States in objc:
+                                        CustomStateList = []
+                                        if States.tag == "CustomStateList":
+                                            for CustomState in States:
+                                                StateRefInfo = {"Name": "", "ID": "", "Property": []}
+                                                for tagA in CustomState:
+                                                    if tagA.tag == "StateRef":
+                                                        StateRefInfo["Name"] = tagA.attrib.get("Name")
+                                                        StateRefInfo["ID"] = tagA.attrib.get("ID")
+                                                    if tagA.tag == "CustomState":
+                                                        for Property in tagA.iter("Property"):
+                                                            StateRefInfo["Property"].append({"Name": Property.attrib.get("Name"), "Value": Property.attrib.get("Value")})
+                                                CustomStateList.append(StateRefInfo)
+                                            ancestor["ifModified"]["Reference"].append({"StatePropertyInfo": CustomStateList})
+
+                                        if States.tag == "StateGroupList":
+                                            for StateGroupRef in States.iter("StateGroupRef"):
+                                                StateGroupRef_Name = StateGroupRef.attrib.get("Name")
+                                                StateGroupRef_ID = StateGroupRef.attrib.get("ID")
+                                                StateObjs = self.get_Paths_of_Children(StateGroupRef_ID)
+                                                PropertyList = []
+                                                for i in StateObjs:
+                                                    if i["name"] != "None":
+                                                        PropertyList.append({"Name": i["name"], "ID": i["id"], "Property": ""})
+
+                                                ancestor["ifModified"]["Reference"].append({"Type": "StateGroupRef", "Name": StateGroupRef_Name, "ID": StateGroupRef_ID, "Property": PropertyList})
+
+                                # 整理ancestor["ifModified"]["Reference"]里的States信息
+                                stateExistsFlag = 0
+                                StatePropertyInfo = {}
+                                for item in ancestor["ifModified"]["Reference"]:
+                                    if item.get("StatePropertyInfo"):
+                                        stateExistsFlag = 1
+                                        StatePropertyInfo = item["StatePropertyInfo"]
+
+                                if stateExistsFlag == 1:
+                                    newReferenceInfo = []
+                                    oriReferenceInfo = ancestor["ifModified"]["Reference"]
+                                    for i in oriReferenceInfo:
+                                        if i.get("StatePropertyInfo", "@#$") == "@#$":
+                                            if i.get("Type") == "StateGroupRef":
+                                                for stateChild in i["Property"]:
+                                                    stateChildID = stateChild["ID"]
+                                                    for k in StatePropertyInfo:
+                                                        if k["ID"] == stateChildID:
+                                                            stateChild["Property"] = k["Property"]
+                                                newReferenceInfo.append(i)
+                                            else:
+                                                newReferenceInfo.append(i)
+                                    ancestor["ifModified"]["Reference"] = newReferenceInfo
+
+                                for objd in child:
+                                    for GroupingObj in objd:
+                                        if GroupingObj.tag == "GroupingList":
+                                            groupList = []
+                                            for Grouping in GroupingObj:
+                                                groupDict = {}
+                                                for SwitchRef in Grouping:
+                                                    if SwitchRef.tag == "SwitchRef":
+                                                        groupDict["Name"] = SwitchRef.attrib.get("Name")
+                                                        groupDict["ID"] = SwitchRef.attrib.get("ID")
+                                                    if SwitchRef.tag == "ItemList":
+                                                        itemList = []
+                                                        for item in SwitchRef:
+                                                            itemList.append({"Name": item.attrib.get("Name"), "ID": item.attrib.get("ID")})
+                                                        groupDict["ItemRef"] = itemList
+                                                groupList.append(groupDict)
+
+                                            for item in ancestor["ifModified"]["Reference"]:
+                                                if item["Type"] == "SwitchGroupOrStateGroup":
+                                                    item["Child"] = groupList
+
+                                for obje in child:
+                                    for BlendTrackList in obje:
+                                        if BlendTrackList.tag == "BlendTrack":
+                                            ancestor["ifModified"]["Reference"].append({"Type": "BlendTrack", "Name": BlendTrackList.attrib.get("Name"), "ID": BlendTrackList.attrib.get("ID")})
+
+                                if ancestor["type"] == "AudioFileSource":
+                                    pathHead = ""
+                                    wavName = ""
+                                    for objf in child.iter("Language"):
+                                        pathHead = objf.text
+                                    for objg in child.iter("AudioFile"):
+                                        wavName = objg.text
+                                    shortWavPath = pathHead + "\\" + wavName
+                                    if pathHead != "":
+                                        ancestor["wavPath"] = global_OriginalsPath + shortWavPath
+
+                                if ancestor["type"] == "Sound":
+                                    for objh in child.iter("ActiveSourceList"):
+                                        for ActiveSource in objh.iter("ActiveSource"):
+                                            info = {"Name": ActiveSource.attrib.get("Name"), "ID": ActiveSource.attrib.get("ID"), "Platform": ActiveSource.attrib.get("Platform")}
+                                            ancestor["ActiveSource"] = info
+
+                event_info_dict[tarName]["ActionList"][ActionGUID]["ObjectRef"]["Parents"].append(ancestor)
+                if ancestor["type"] != "WorkUnit" and ancestor["type"] != "Folder":
+                    parMark = 1
+        return event_info_dict
+
+    # --------------------------------------------------------------------------------------------------------------------------- get_UltraInfo_By_EventName_From_WWU
+    def get_UltraInfo_By_EventName_From_WWU(self, EventStr):
+        # 先全局保存
+        self.saveSession()
+
+        # 获取Event基本信息，建立Event数据框架。通过EventStr获得Event所在wwu的路径
+        setupResultDict = self.SetUpFunc_UltraInfo_CreateEventStructure(EventStr)
+        if setupResultDict is not None:
+            event_info_dict = setupResultDict["event_info_dict"]
+            tarName = setupResultDict["tarName"]
+            tarID = setupResultDict["tarID"]
+            EventNameNode = setupResultDict["EventNameNode"]
+
+            # 统计变更项，留给后面做信号链分析用(以Event为单位组)
+            ChildrenBeenModifiedList = []
+
+            # 判断是否存在Action，如果存在的话，再进一步检索Action的详细信息
+            actionCountResult = self.get_Paths_of_Children(tarID)
+            if len(actionCountResult) == 0:
+                event_info_dict[tarName]["ifEmpty"]["Bool"] = "True"
+            else:
+                # Action层
+                for Action in EventNameNode.iter("Action"):
+                    ActionGUID = Action.attrib.get("ID")
+
+                    # 统计变更项，留给后面做信号链分析用(以Action为单位组)
+                    ModifiedItemList = []
+
+                    actStructure = self.SetUpFunc_UltraInfo_CreateActionStructure()
+                    event_info_dict[tarName]["ActionList"][ActionGUID] = actStructure
+
+                    # Action的 ObjectRef层
+                    for ObjectRef in Action.iter("ObjectRef"):
+                        ObjectRef_Name = ObjectRef.attrib.get("Name")
+                        ObjectRef_ID = ObjectRef.attrib.get("ID")
+                        ObjectRef_Type = self.get_TypeOfGUID(ObjectRef_ID)
+                        ObjectRef_WwisePath = self.get_PathOfGUID(ObjectRef_ID)
+                        ObjectRef_WorkUnitPath = self.get_wwuPath_From_GUID(ObjectRef_ID)
+
+                        event_info_dict[tarName]["ActionList"][ActionGUID]["ObjectRef"]["id"] = ObjectRef_ID
+                        event_info_dict[tarName]["ActionList"][ActionGUID]["ObjectRef"]["type"] = ObjectRef_Type
+                        event_info_dict[tarName]["ActionList"][ActionGUID]["ObjectRef"]["name"] = ObjectRef_Name
+                        event_info_dict[tarName]["ActionList"][ActionGUID]["ObjectRef"]["path"] = ObjectRef_WwisePath
+                        event_info_dict[tarName]["ActionList"][ActionGUID]["ObjectRef"]["filePath"] = ObjectRef_WorkUnitPath
+
+                        AncestorsList = self.get_Paths_of_Ancestors(ObjectRef_ID)
+                        # LOG.info(AncestorsList)
+                        AncestorsList.reverse()
+                        AncestorsList = AncestorsList[1:]
+
+                        # 将ObjectRef自身临时放在AncestorsList中一起处理，最后再移出来
+                        AncestorsList.append({"id": ObjectRef_ID, "type": ObjectRef_Type, "name": ObjectRef_Name, "path": ObjectRef_WwisePath, "filePath": ObjectRef_WorkUnitPath})
+
+                        # 将ObjectRef的全部子对象临时放在AncestorsList中一起处理，最后再移出来
+                        AllChildrenList = self.get_Paths_of_DescendantChildren(ObjectRef_ID)
+                        AncestorsList += AllChildrenList
+
+                        # 全局扫描，获取数据
+                        event_info_dict = self.SetUpFunc_UltraInfo_AnalyseInfo(AncestorsList, event_info_dict, tarName, ActionGUID)
+
+                        # 统计Property和Reference的数量，为每一个对象写入Bool的值 --------------------------------------------------------------------------------------
+                        if event_info_dict[tarName]["ActionList"][ActionGUID]["ObjectRef"]["type"] != "Event":  # 避开Event作为Action的ObjectRef的情况
+                            for i in event_info_dict[tarName]["ActionList"][ActionGUID]["ObjectRef"]["Parents"]:
+                                # LOG.info(i)
+                                if len(i["ifModified"]["Property"]) != 0 or len(i["ifModified"]["Reference"]) != 0:
+                                    i["ifModified"]["Bool"] = "True"
+                                    # ModifiedItemList.append({"id": i["id"], "type": i["type"], "name": i["name"], "path": i["path"], "ModifiedCount_Property": len(i["ifModified"]["Property"]), "ModifiedCount_Reference": len(i["ifModified"]["Reference"])})
+                                    ModifiedItemList.append({"id": i["id"], "type": i["type"], "name": i["name"], "path": i["path"], "ModifiedCount_Property": i["ifModified"]["Property"], "ModifiedCount_Reference": i["ifModified"]["Reference"]})
+
+                        # ifBeenRemoteAffected（判断当前的Action的ObjectRef自身，是否同时出现在其他Event中、或者跟随其他Action多次出现在当前的Event中）
+                        referenceResult = self.get_Paths_of_referencesTo(ObjectRef_ID)
+                        if referenceResult is not None:
+                            if len(referenceResult) == 1:
+                                pass
+                            elif len(referenceResult) > 1:
+                                event_info_dict[tarName]["ActionList"][ActionGUID]["ifBeenRemoteAffected"]["Bool"] = "True"
+                                for i in referenceResult:
+                                    if i["id"] != ActionGUID:
+                                        event_info_dict[tarName]["ActionList"][ActionGUID]["ifBeenRemoteAffected"]["Items"].append(i)
+
+                        # ifBeenRemoteAffected（判断当前的每一个对象，是否受到Switch、State、RTPC的影响，单独整理出一份数据）
+                        for freshItem in AncestorsList:
+                            curPropertyList = freshItem["ifModified"]["Property"]
+                            curReferenceList = freshItem["ifModified"]["Reference"]
+                            ifBeenRemoteAffectedFlag = 0
+
+                            for propertyItem in curPropertyList:
+                                if len(propertyItem.get("Child", "")) != 0:
+                                    for k in propertyItem["Child"]:
+                                        if k.get("Type", "@#$") == "RTPCList":
+                                            freshItem["ifBeenRemoteAffected"]["Items"].append(propertyItem)
+                                            event_info_dict[tarName]["ActionList"][ActionGUID]["ObjectRef"]["ifBeenRemoteAffected"]["Items"].append({freshItem["path"]: propertyItem})
+                                            ifBeenRemoteAffectedFlag = 1
+                                            continue
+
+                            for ReferenceItem in curReferenceList:
+                                if ReferenceItem.get("Type", "@#$") == "SwitchGroupOrStateGroup" or ReferenceItem.get("Type", "@#$") == "StateGroupRef":
+                                    freshItem["ifBeenRemoteAffected"]["Items"].append(ReferenceItem)
+                                    event_info_dict[tarName]["ActionList"][ActionGUID]["ObjectRef"]["ifBeenRemoteAffected"]["Items"].append({freshItem["path"]: ReferenceItem})
+                                    ifBeenRemoteAffectedFlag = 1
+                                else:
+                                    if type(ReferenceItem.get("Property", "@#$")) is list:
+                                        for i in ReferenceItem["Property"]:
+                                            if len(i.get("Child", "")) != 0:
+                                                for k in i["Child"]:
+                                                    if k.get("Type", "@#$") == "RTPCList":
+                                                        freshItem["ifBeenRemoteAffected"]["Items"].append(i)
+                                                        event_info_dict[tarName]["ActionList"][ActionGUID]["ObjectRef"]["ifBeenRemoteAffected"]["Items"].append({freshItem["path"]: i})
+                                                        ifBeenRemoteAffectedFlag = 1
+                                                        continue
+
+                            if ifBeenRemoteAffectedFlag == 1:
+                                event_info_dict[tarName]["ActionList"][ActionGUID]["ObjectRef"]["ifBeenRemoteAffected"]["Bool"] = "True"
+
+                        # 先判断ObjectRef类型是不是非Bus、AuxBus
+                        ChildrenCount = len(AllChildrenList)
+                        if ObjectRef_Type in ["Bus", "AuxBus"]:
+                            event_info_dict[tarName]["ActionList"][ActionGUID]["ObjectRef"]["Parents"] = AncestorsList[0:-1]
+                        elif ObjectRef_Type == "Event":
+                            event_info_dict[tarName]["ActionList"][ActionGUID]["ObjectRef"]["Parents"] = event_info_dict[tarName]["ActionList"][ActionGUID]["ObjectRef"]["Parents"][0: -(ChildrenCount + 1)]
+                        else:  # 将ObjectRef临时放在AncestorsList中的子对象信息，移动到Children、Parents
+                            event_info_dict[tarName]["ActionList"][ActionGUID]["ObjectRef"]["Children"] = AncestorsList[-ChildrenCount:]
+                            event_info_dict[tarName]["ActionList"][ActionGUID]["ObjectRef"]["Parents"] = event_info_dict[tarName]["ActionList"][ActionGUID]["ObjectRef"]["Parents"][0: -ChildrenCount]
+
+                            # 将ObjectRef临时放在AncestorsList中的自身的信息，移动到Parent
+                            ParentList = event_info_dict[tarName]["ActionList"][ActionGUID]["ObjectRef"]["Parents"]
+                            if len(ParentList) != 0:  # 这里可能指派的是BUS类型，需要单独判断下
+                                ObjectRefInfo = event_info_dict[tarName]["ActionList"][ActionGUID]["ObjectRef"]["Parents"][-1]
+                                event_info_dict[tarName]["ActionList"][ActionGUID]["ObjectRef"]["ifModified"] = ObjectRefInfo["ifModified"]
+                                event_info_dict[tarName]["ActionList"][ActionGUID]["ObjectRef"]["Parents"] = event_info_dict[tarName]["ActionList"][ActionGUID]["ObjectRef"]["Parents"][0:-1]
+
+                            # 进一步给Children的List做分组判断 ---------------------------------------------------------------------------------------------
+                            curChildrenList = event_info_dict[tarName]["ActionList"][ActionGUID]["ObjectRef"]["Children"]
+                            if len(curChildrenList) != 0:
+                                event_info_dict[tarName]["ActionList"][ActionGUID]["ObjectRef"]["Children"] = merge_children(curChildrenList)
+
+                    # Action的 Property层
+                    for EventName in Action.iter("Property"):
+                        Property_Name = EventName.attrib.get("Name", "@#$")
+                        Property_Value = EventName.attrib.get("Value", "1")
+                        if Property_Name not in ["ActionType"]:
+                            propertyGroup = {"Name": Property_Name, "Value": Property_Value}
+                            event_info_dict[tarName]["ActionList"][ActionGUID]["ifModified"]["Property"].append(propertyGroup)
+                            # print(EventName.attrib.get("Name") + ": " + EventName.attrib.get("Value"))
+
+                        # 补充ActionType实际字符串
+                        if Property_Name == "ActionType":
+                            event_info_dict[tarName]["ActionList"][ActionGUID]["Type"] = Get_EventPropertyTypeString_From_ActionValueStr(Property_Value)
+
+                    # 将Action的Property判断也加入ModifiedItemList
+                    actionPropertyList = event_info_dict[tarName]["ActionList"][ActionGUID]["ifModified"]["Property"]
+                    if len(actionPropertyList) != 0:
+                        event_info_dict[tarName]["ActionList"][ActionGUID]["ifModified"]["Bool"] = "True"
+                        ModifiedItemList.insert(0, {"id": ActionGUID, "type": "Action", "ModifiedCount_Property": actionPropertyList})
+
+                    # 将ModifiedItemList并入ChildrenBeenModifiedList
+                    if len(ModifiedItemList) != 0:
+                        objectRefPath = event_info_dict[tarName]["ActionList"][ActionGUID]["ObjectRef"]["path"]
+                        ChildrenBeenModifiedList.append(ModifiedItemList)
+
+                # ifChildrenBeenModified（将ChildrenBeenModifiedList检查结果写入EventInfo）
+                if len(ChildrenBeenModifiedList) != 0:
+                    event_info_dict[tarName]["ifChildrenBeenModified"]["Bool"] = "True"
+                    event_info_dict[tarName]["ifChildrenBeenModified"]["Items"] = ChildrenBeenModifiedList
+
+                # ifChildrenBeenModified_BUS（基于ifChildrenBeenModified，BUS专项补充检查）
+                if event_info_dict[tarName]["ifChildrenBeenModified"]["Bool"] == "True":
+                    for actionGroupList in event_info_dict[tarName]["ifChildrenBeenModified"]["Items"]:
+                        for ModifiedItem in actionGroupList:
+                            curObjectRefPath = ModifiedItem.get("path")
+                            curObjectRefInfoGroup = {curObjectRefPath: []}
+                            referenceInfo = ModifiedItem.get("ModifiedCount_Reference", "")
+                            if len(referenceInfo) != 0:
+                                for referenceItem in referenceInfo:
+                                    # 分类查询涉及BUS引用的对象，把BUS的信息分别提取出来
+                                    if referenceItem.get("Type") in ["OutputBus", "ReflectionsAuxSend"]:
+                                        # 进一步获取并补充path和filePath
+                                        busID = referenceItem.get("ID")
+                                        busFullInfo = self.get_Paths_of_Ancestors(busID)
+                                        busFullInfo = busFullInfo[0:-1]
+
+                                        # 将BUS本身的信息也加入curObjectRefInfoGroup[curObjectRefPath]，待后续统一检索
+                                        busSelfInfo = self.get_BasicInfoDict_From_GUID(busID)
+                                        busSelfInfo_clean = {"id": busID, "type": busSelfInfo["type"], "filePath": busSelfInfo["filePath"], "path": busSelfInfo["path"], "name": busSelfInfo["name"]}
+                                        busFullInfo.insert(0, busSelfInfo_clean)
+                                        busFullInfo.reverse()
+
+                                        curObjectRefInfoGroup[curObjectRefPath].append(busFullInfo)
+
+                            if len(curObjectRefInfoGroup[curObjectRefPath]) != 0:
+                                event_info_dict[tarName]["ifChildrenBeenModified_BUS"]["Items"].append(curObjectRefInfoGroup)
+                                readyForBeenCheckingBusList = curObjectRefInfoGroup[curObjectRefPath]
+                                # LOG.info(readyForBeenCheckingBusList)
+
+                                # 收集、整理关系
+                                ResultListOfObjectRef = []
+                                for listItem in readyForBeenCheckingBusList:
+                                    temp_event_info_dict = {EventStr: {"ActionList": {"ActionGUID_Fake": {"ObjectRef": {"ifModified": {"Bool": "", "Property": [], "Reference": []}, "Parents": []}}}}}
+                                    ResultInfo = self.SetUpFunc_UltraInfo_AnalyseInfo(listItem, temp_event_info_dict, tarName, "ActionGUID_Fake")
+
+                                    # 精简(单条支线组)
+                                    BriefResultInfo = ResultInfo[EventStr]["ActionList"]["ActionGUID_Fake"]["ObjectRef"]["Parents"]
+
+                                    # 筛选
+                                    countFlag = 0
+                                    tarBusPath = BriefResultInfo[-1]["path"]
+                                    tempList = {tarBusPath: []}
+                                    for item in BriefResultInfo:
+                                        PropertyList = item["ifModified"]["Property"]
+                                        ReferenceList = item["ifModified"]["Reference"]
+                                        if len(PropertyList) == 0 and len(ReferenceList) == 0:
+                                            pass
+                                        else:
+                                            countFlag += 1
+                                            tempList[tarBusPath].append(item)
+                                            # 将BUS的信息，并入event_info_dict
+                                            event_info_dict[tarName]["ifChildrenBeenModified_BUS"]["Bool"] = "True"
+
+                                    if countFlag != 0:
+                                        ResultListOfObjectRef.append(tempList)
+
+                                curObjectRefInfoGroup[curObjectRefPath] = ResultListOfObjectRef
+                                event_info_dict[tarName]["ifChildrenBeenModified_BUS_Ori"]["Items"].append(BriefResultInfo)
+
+                # ifBeenAssignedToBank
+                # 先获取Event的全部父级
+                parentIDList = self.get_Paths_of_Ancestors(tarID)
+                parentIDList.insert(0, {"id": tarID})
+
+                bnkWWUPathList = []
+                for ParentId in parentIDList:
+                    result = self.get_Paths_of_referencesTo(ParentId["id"])
+                    for bnkInfo in result:
+                        if bnkInfo.get("type") == "SoundBank":
+                            bnkWWUPathList.append(bnkInfo)
+
+                if bnkWWUPathList is not None:
+                    if len(bnkWWUPathList) == 0:
+                        event_info_dict[tarName]["ifBeenAssignedToBank"]["Bool"] = "False"
+                    elif len(bnkWWUPathList) >= 1:
+                        event_info_dict[tarName]["ifBeenAssignedToBank"]["Bool"] = "True"
+                        for i in bnkWWUPathList:
+                            i["ExclusionInfo"] = []
+                            bnkWWUPath = i["filePath"]
+                            bnkModifiledDict = {"ObjectExclusionList": "", "GameSyncExclusionList": ""}
+                            treeee = ET.parse(bnkWWUPath)
+                            rootr = treeee.getroot()
+                            for elem in rootr.iter("WwiseDocument"):
+                                for child in elem.iter():
+                                    if child.attrib.get("Name") == i["name"] and child.attrib.get("ID") == i["id"]:
+                                        # 到这里，说明找到了目标bnk对象，可继续查询ObjectExclusionList、GameSyncExclusionList
+                                        for subItemA in child.iter("ObjectExclusionList"):
+                                            ObjectExclusionList = []
+                                            for subI in subItemA:
+                                                ObjectExclusionList.append({"Name": subI.attrib.get("Name"), "ID": subI.attrib.get("ID"), "WorkUnitID": subI.attrib.get("WorkUnitID")})
+                                            bnkModifiledDict["ObjectExclusionList"] = ObjectExclusionList
+
+                                        for subItemB in child.iter("GameSyncExclusionList"):
+                                            GameSyncExclusionList = []
+                                            for subG in subItemB:
+                                                GameSyncExclusionList.append({"Name": subG.attrib.get("Name"), "ID": subG.attrib.get("ID"), "WorkUnitID": subG.attrib.get("WorkUnitID")})
+                                            bnkModifiledDict["GameSyncExclusionList"] = GameSyncExclusionList
+
+                            i["ExclusionInfo"] = bnkModifiledDict
+
+                            # 进一步判断Bank是否存在自定义设置
+                            if len(bnkModifiledDict["ObjectExclusionList"]) != 0 or len(bnkModifiledDict["GameSyncExclusionList"]) != 0:
+                                event_info_dict[tarName]["ifBankBeenModified"]["Bool"] = "True"
+
+                            event_info_dict[tarName]["ifBeenAssignedToBank"]["Items"].append(i)
+                else:
+                    event_info_dict[tarName]["ifBeenAssignedToBank"]["Bool"] = "False"
+
+                # ifBeenRemoteAffected_ByActions/ifBeenRemoteAffected_ByVariables（每个ObjectRef的结果汇总到Event储存）
+                ifBeenRemoteAffected_ByActions = []
+                ifBeenRemoteAffected_ByVariables = []
+
+                for action, infos in zip(event_info_dict[tarName]["ActionList"].keys(), event_info_dict[tarName]["ActionList"].values()):
+                    if len(infos["ifBeenRemoteAffected"]["Items"]) != 0:
+                        ifBeenRemoteAffected_ByActions.append({infos["ObjectRef"]["path"]: infos["ifBeenRemoteAffected"]["Items"]})
+
+                    if len(infos["ObjectRef"]["ifBeenRemoteAffected"]["Items"]) != 0:
+                        ifBeenRemoteAffected_ByVariables.append({action: infos["ObjectRef"]["ifBeenRemoteAffected"]["Items"]})
+
+                if len(ifBeenRemoteAffected_ByActions) != 0:
+                    event_info_dict[tarName]["ifBeenRemoteAffected_ByActions"]["Items"] = ifBeenRemoteAffected_ByActions
+                    event_info_dict[tarName]["ifBeenRemoteAffected_ByActions"]["Bool"] = "True"
+
+                if len(ifBeenRemoteAffected_ByVariables) != 0:
+                    event_info_dict[tarName]["ifBeenRemoteAffected_ByVariables"]["Items"] = ifBeenRemoteAffected_ByVariables
+                    event_info_dict[tarName]["ifBeenRemoteAffected_ByVariables"]["Bool"] = "True"
+
+                # ifMultiAction
+                typeList = []
+                PathList = []
+                purePathList = []
+
+                ActionCount = len(event_info_dict[tarName]["ActionList"])
+                if ActionCount == 0:
+                    event_info_dict[tarName]["ifMultiAction"]["Bool"] = "False"
+                elif ActionCount == 1:
+                    pass
+                elif ActionCount > 1:
+                    event_info_dict[tarName]["ifMultiAction"]["Bool"] = "True"
+                    for action, infos in zip(event_info_dict[tarName]["ActionList"].keys(), event_info_dict[tarName]["ActionList"].values()):
+                        if infos["Type"] == "":
+                            typeList.append("Play")
+                            typeStr = "Play"
+                        else:
+                            typeList.append(infos["Type"])
+                            typeStr = infos["Type"]
+
+                        PathList.append({typeStr: infos["ObjectRef"]["path"]})
+                        purePathList.append(infos["ObjectRef"]["path"])
+                    event_info_dict[tarName]["ifMultiAction"]["Items"] = PathList
+
+                # ifMultiActionType
+                typeList = list(merge_identical_dicts(typeList))
+                if len(typeList) > 1:
+                    event_info_dict[tarName]["ifMultiActionType"]["Bool"] = "True"
+                    event_info_dict[tarName]["ifMultiActionType"]["Items"] = typeList
+
+                # ifSpecialActionType补充无ObjectRef类型
+                for actionID, actionInfo in zip(event_info_dict[tarName]["ActionList"].keys(), event_info_dict[tarName]["ActionList"].values()):
+                    if actionInfo["ObjectRef"]["type"] not in ["BlendContainer", "Sound", "RandomSequenceContainer", "SwitchContainer", "MusicPlaylistContainer", "MusicSwitchContainer", "MusicSegment"]:
+                        event_info_dict[tarName]["ifSpecialActionType"]["Bool"] = "True"
+                        event_info_dict[tarName]["ifSpecialActionType"]["Items"].append({"type": actionInfo["Type"], "path": actionInfo["ObjectRef"]["path"]})
+
+                # ifActionSelfParadox (这里后续需要补充一种可能：ObjectRef之间的某个子对象或父对象之间，也存在矛盾关系)
+                if len(purePathList) != len(set(purePathList)):
+                    event_info_dict[tarName]["ifActionSelfParadox"]["Items"] = find_duplicates(purePathList)
+                    event_info_dict[tarName]["ifActionSelfParadox"]["Bool"] = "True"
+
+            # LOG.info(event_info_dict)
+            return event_info_dict
+
+    def print_UltraInfoOfEvent(self, EventStr):
+        event_info_dict = self.get_UltraInfo_By_EventName_From_WWU(EventStr)
+        if event_info_dict is not None:
+
+            # "ifEmpty": {"Bool": ""},  # 是否是空的Event
+            # "ifBeenAssignedToBank": {"Bool": "", "Items": []},  # 是否有所属的Bank指派
+            # "ifBankBeenModified": {"Bool": "", "Items": []},  # Bank是否被自定义过
+            # "ifMultiAction": {"Bool": "", "Items": []},  # 是否包含多个Action
+            # "ifMultiActionType": {"Bool": "", "Items": []},  # 是否存在多个ActionType
+            # "ifSpecialActionType": {"Bool": "", "Items": []},  # 是否存在特殊的ActionType
+            # "ifActionSelfParadox": {"Bool": "", "Items": []},  # 是否存在自相矛盾的Action
+            # "ifChildrenBeenModified": {"Bool": "", "Items": []},  # 是否存在非默认值的子对象
+            # "ifChildrenBeenModified_BUS": {"Bool": "", "Items": []},  # 是否存在非默认值的子对象(BUS专项检查)
+            # "ifBeenRemoteAffected_ByActions": {"Bool": "", "Items": []},  # 是否受到其他Event中Action的影响（全局总计）（例如：Stop或Break对Play的遥控、Resume对Pause的遥控）
+            # "ifBeenRemoteAffected_ByVariables": {"Bool": "", "Items": []},  # 是否受到任何变量的动态传参影响（全局总计）（例如：Switch、State、RTPC、Meter等对Property的遥控，或VoiceLimit、Threshold等其他类型）
+            # "EstimateTotalLoudnessRange": [],  # 响度值区间
+            # "ActionList": {}
+
+            # 导出json结果文件
+            if key["DevMode"] == "dev":
+                curTimeStr = getCurrentTimeStr()
+                outputFilePath = os.path.join(global_curWwisePath, "EDR_" + EventStr + "_" + curTimeStr + ".json")
+                if not os.path.exists(outputFilePath):
+                    SaveJson(event_info_dict, outputFilePath)
+                    open_file_folder_highlight(outputFilePath)
+
+            # 打印诊断结果
+            if event_info_dict[EventStr]["ifEmpty"]["Bool"] == "True":
+                LOG.info(lan["GUI_LOG_DiagnoseEvent_ifEmpty"][L])
+
+            if event_info_dict[EventStr]["ifBeenAssignedToBank"]["Bool"] != "True":
+                LOG.info(lan["GUI_LOG_DiagnoseEvent_ifBeenAssignedToBank"][L])
+            else:
+                bankInfo = event_info_dict[EventStr]["ifBeenAssignedToBank"]["Items"]
+                bankInfo = merge_identical_dicts(bankInfo)
+                bankCount = len(bankInfo)
+                if bankCount > 1:
+                    LOG.info(lan["GUI_LOG_DiagnoseEvent_ifAssignedToMultiBank"][L])
+                    bnkPathList = []
+                    for bank in bankInfo:
+                        bnkPathList.append(bank.get("path", ""))
+                    for bnkPath in bnkPathList:
+                        LOG.info(bnkPath)
+
+                # 进一步检查ifBankBeenModified的情况
+                if event_info_dict[EventStr]["ifBankBeenModified"]["Bool"] == "True":
+                    LOG.info(lan["GUI_LOG_DiagnoseEvent_ifBankBeenModified"][L])
+                    for bnk in bankInfo:
+                        ExclusionInfo = bnk["ExclusionInfo"]
+                        # LOG.info(ExclusionInfo)
+
+                        bnkPath = bnk.get("path", "")
+                        outputInfo = {"path": bnkPath}
+
+                        ObjectExclusionList = ExclusionInfo["ObjectExclusionList"]
+                        GameSyncExclusionList = ExclusionInfo["GameSyncExclusionList"]
+
+                        if len(ObjectExclusionList) != 0:
+                            outputInfo["ObjectExclusionList"] = ObjectExclusionList
+                        if len(GameSyncExclusionList) != 0:
+                            outputInfo["GameSyncExclusionList"] = GameSyncExclusionList
+                        if len(ObjectExclusionList) == 0 and len(GameSyncExclusionList) == 0:
+                            pass
+                        else:
+                            LOG.info(outputInfo)
+
+            if event_info_dict[EventStr]["ifMultiAction"]["Bool"] == "True":
+                LOG.info(lan["GUI_LOG_DiagnoseEvent_ifMultiAction"][L])
+                for i in event_info_dict[EventStr]["ifMultiAction"]["Items"]:
+                    LOG.info(str(i))
+
+            if event_info_dict[EventStr]["ifMultiActionType"]["Bool"] == "True":
+                LOG.info(lan["GUI_LOG_DiagnoseEvent_ifMultiActionType"][L])
+                for i in event_info_dict[EventStr]["ifMultiActionType"]["Items"]:
+                    LOG.info(str(i))
+
+            if event_info_dict[EventStr]["ifSpecialActionType"]["Bool"] == "True":
+                LOG.info(lan["GUI_LOG_DiagnoseEvent_ifSpecialActionType"][L])
+                for i in event_info_dict[EventStr]["ifSpecialActionType"]["Items"]:
+                    LOG.info(str(i))
+
+            if event_info_dict[EventStr]["ifActionSelfParadox"]["Bool"] == "True":
+                LOG.info(lan["GUI_LOG_DiagnoseEvent_ifActionSelfParadox"][L])
+                for i in event_info_dict[EventStr]["ifActionSelfParadox"]["Items"]:
+                    LOG.info(str(i))
+
+            if event_info_dict[EventStr]["ifChildrenBeenModified"]["Bool"] == "True":
+                LOG.info(lan["GUI_LOG_DiagnoseEvent_ifChildrenBeenModified"][L])
+                for i in event_info_dict[EventStr]["ifChildrenBeenModified"]["Items"]:
+                    LOG.info("\n>>>>>>>>>")
+                    for j in i:
+                        ObjectRefPath = j.get("path", "UnknownPath")
+                        ObjectRefType = j.get("type", "UnknownType")
+                        ModifiedCount_Property = j.get("ModifiedCount_Property", "")
+                        ModifiedCount_Reference = j.get("ModifiedCount_Reference", "")
+                        if len(ModifiedCount_Property) == 0 and len(ModifiedCount_Reference) == 0:
+                            pass
+                        else:
+                            tempDict = {"path": ObjectRefPath, "type": ObjectRefType}
+                            if len(ModifiedCount_Property) != 0:
+                                hintList_p = []
+                                for propertyItem in ModifiedCount_Property:
+                                    hintNameStr = propertyItem.get("Name", "UnknownObj")
+                                    hintList_p.append(hintNameStr)
+                                tempDict["ModifiedCount_Property"] = hintList_p
+                            if len(ModifiedCount_Reference) != 0:
+                                hintList_r = []
+                                for referenceItem in ModifiedCount_Reference:
+                                    hintNameStr_r = referenceItem.get("Name", "UnknownName")
+                                    hintTypeStr_r = referenceItem.get("Type", "UnknownType")
+                                    hintList_r.append({hintTypeStr_r: hintNameStr_r})
+                                tempDict["ModifiedCount_Reference"] = hintList_r
+                            LOG.info(tempDict)
+
+            if event_info_dict[EventStr]["ifChildrenBeenModified_BUS"]["Bool"] == "True":
+                LOG.info(lan["GUI_LOG_DiagnoseEvent_ifChildrenBeenModified_BUS"][L])
+                FullCollect = []
+                for i in event_info_dict[EventStr]["ifChildrenBeenModified_BUS"]["Items"]:
+                    for objectRefPath, infos in zip(i.keys(), i.values()):
+                        for j in infos:
+                            for x, z in zip(j.keys(), j.values()):
+                                for y in z:
+                                    modifiedBusPath = y["path"]
+                                    briefDict = {"modifiedBusPath": modifiedBusPath}
+                                    propertyInfo = y["ifModified"]["Property"]
+                                    referenceInfo = y["ifModified"]["Reference"]
+
+                                    if len(propertyInfo) != 0:
+                                        propertyNameList = []
+                                        for ii in propertyInfo:
+                                            propertyNameList.append(ii["Name"])
+                                        briefDict["Property"] = propertyNameList
+
+                                    if len(referenceInfo) != 0:
+                                        briefDict["Reference"] = referenceInfo
+
+                                    FullCollect.append({objectRefPath: {modifiedBusPath: briefDict}})
+
+                # 合并相同项
+                combineInfoList = merge_identical_dicts(FullCollect)
+                for c in combineInfoList:
+                    LOG.info(c)
+
+            if event_info_dict[EventStr]["ifBeenRemoteAffected_ByActions"]["Bool"] == "True":
+                LOG.info(lan["GUI_LOG_DiagnoseEvent_ifBeenRemoteAffected_ByActions"][L])
+                for i in event_info_dict[EventStr]["ifBeenRemoteAffected_ByActions"]["Items"]:
+                    actionPath = ""
+                    pathList = []
+                    for j, lis in zip(i.keys(), i.values()):
+                        actionPath = j
+                        for li in lis:
+                            pathList.append(li["path"])
+                    pathList = merge_identical_dicts(pathList)
+                    LOG.info({actionPath: pathList})
+
+            if event_info_dict[EventStr]["ifBeenRemoteAffected_ByVariables"]["Bool"] == "True":
+                LOG.info(lan["GUI_LOG_DiagnoseEvent_ifBeenRemoteAffected_ByVariables"][L])
+                for i in event_info_dict[EventStr]["ifBeenRemoteAffected_ByVariables"]["Items"]:
+                    for a, lis in zip(i.keys(), i.values()):
+                        for li in lis:
+                            for objPath, info in zip(li.keys(), li.values()):
+                                Log.info("\n>>>>> " + str(objPath))
+                                if info.get("Type", "@#$") == "@#$":
+                                    Log.info({"EffectedObject": info["Name"], "Type": "RTPC"})
+                                else:
+                                    Log.info({"EffectedObject": info["Name"], "Type": info["Type"]})
+
+            LOG.info("\n---------------------------------------")
+            LOG.info(lan["GUI_LOG_DiagnoseEvent_Report"][L])
+
+    def get_UltraInfo_By_EventName_From_WWU_BackUp(self, EventStr):
+        # 先全局保存
+        self.saveSession()
+
+        # # 获取Event基本信息，建立Event数据框架
+        # setupResultDict = self.SetUpFunc_UltraInfo_CreateEventStructure(EventStr)
+        # if setupResultDict is not None:
+        #     event_info_dict = setupResultDict["event_info_dict"]
+        #     tarName = setupResultDict["tarName"]
+        #     tarID = setupResultDict["tarID"]
+
+        event_info_dict = {}
+        # 通过EventStr获得Event所在wwu的路径
+        eventWwuPath = self.get_wwuPath_From_EventName(EventStr)
+        if eventWwuPath is not None:
+            tree = ET.parse(eventWwuPath)
+            root = tree.getroot()
+            # Event层
+            for EventNames in root.iter("Event"):
+                tarName = EventNames.attrib.get("Name")
+                tarID = EventNames.attrib.get("ID")
+                if tarName == EventStr:
+                    eStructure = {
+                        "ifBeenAssignedToBank": {"Bool": "", "Items": []},  # 是否有所属的Bank指派
+                        "ifBankBeenModified": {"Bool": "", "Items": []},  # Bank是否被自定义过
+                        "ifEmpty": {"Bool": "", "Items": []},  # 是否是空的Event
+                        "ifMultiAction": {"Bool": "", "Items": []},  # 是否包含多个Action
+                        "ifMultiActionType": {"Bool": "", "Items": []},  # 是否存在多个ActionType
+                        "ifSpecialActionType": {"Bool": "", "Items": []},  # 是否存在特殊的ActionType
+                        "ifActionSelfParadox": {"Bool": "", "Items": []},  # 是否存在自相矛盾的Action
+                        "ifChildrenBeenModified": {"Bool": "", "Items": []},  # 是否存在非默认值的子对象
+                        "ifChildrenBeenModified_BUS": {"Bool": "", "Items": []},  # 是否存在非默认值的子对象(BUS专项检查)
+                        "ifBeenRemoteAffected_ByActions": {"Bool": "", "Items": []},  # 是否受到其他Event中Action的影响（全局总计）（例如：Stop或Break对Play的遥控、Resume对Pause的遥控）
+                        "ifBeenRemoteAffected_ByVariables": {"Bool": "", "Items": []},  # 是否受到任何变量的动态传参影响（全局总计）（例如：Switch、State、RTPC、Meter等对Property的遥控，或VoiceLimit、Threshold等其他类型）
+                        "EstimateTotalLoudnessRange": [],  # 响度值区间
+                        "ActionList": {}
+                    }
+                    event_info_dict[tarName] = eStructure
+
+                    # 统计变更项，留给后面做信号链分析用(以Event为单位组)
+                    ChildrenBeenModifiedList = []
+
+                    # 判断是否存在Action
+                    actionCountResult = self.get_Paths_of_Children(tarID)
+                    if len(actionCountResult) == 0:
+                        event_info_dict[tarName]["ifEmpty"]["Bool"] = "True"
+
+                    # Action层
+                    for Action in EventNames.iter("Action"):
+                        ActionGUID = Action.attrib.get("ID")
+
+                        # 统计变更项，留给后面做信号链分析用(以Action为单位组)
+                        ModifiedItemList = []
+                        actStructure = {
+                            "ifModified": {"Bool": "", "Property": []},  # 是否存在非默认值（Action框架）
+                            "ifBeenRemoteAffected": {"Bool": "", "Items": []},  # 是否受到其他Event中Action的影响（局部统计）（例如：Stop或Break对Play的遥控、Resume对Pause的遥控）
+                            "-------": "-------",
+                            "Type": "",
+                            "ObjectRef": {
+                                "ifModified": {"Bool": "", "Property": [], "Reference": []},  # 是否存在非默认值（ObjectRef框架）
+                                "ifBeenRemoteAffected": {"Bool": "", "Items": []},  # 是否受到任何变量的动态传参影响（局部统计）（例如：Switch、State、RTPC、Meter等对Property的遥控，或VoiceLimit、Threshold等其他类型）
+                                "-------": "-------",
+                                "id": "",
+                                "type": "",
+                                "name": "",
+                                "path": "",
+                                "filePath": "",
+                                "Parents": [],
+                                "Children": []
+                            }
+                        }
+                        event_info_dict[tarName]["ActionList"][ActionGUID] = actStructure
+
+                        # Action的 ObjectRef层
+                        for ObjectRef in Action.iter("ObjectRef"):
+                            ObjectRef_Name = ObjectRef.attrib.get("Name")
+                            ObjectRef_ID = ObjectRef.attrib.get("ID")
+                            ObjectRef_Type = self.get_TypeOfGUID(ObjectRef_ID)
+                            ObjectRef_WwisePath = self.get_PathOfGUID(ObjectRef_ID)
+                            ObjectRef_WorkUnitPath = self.get_wwuPath_From_GUID(ObjectRef_ID)
+
+                            event_info_dict[tarName]["ActionList"][ActionGUID]["ObjectRef"]["id"] = ObjectRef_ID
+                            event_info_dict[tarName]["ActionList"][ActionGUID]["ObjectRef"]["type"] = ObjectRef_Type
+                            event_info_dict[tarName]["ActionList"][ActionGUID]["ObjectRef"]["name"] = ObjectRef_Name
+                            event_info_dict[tarName]["ActionList"][ActionGUID]["ObjectRef"]["path"] = ObjectRef_WwisePath
+                            event_info_dict[tarName]["ActionList"][ActionGUID]["ObjectRef"]["filePath"] = ObjectRef_WorkUnitPath
+
+                            AncestorsList = self.get_Paths_of_Ancestors(ObjectRef_ID)
+                            # LOG.info(AncestorsList)
+                            AncestorsList.reverse()
+                            AncestorsList = AncestorsList[1:]
+
+                            # 将ObjectRef自身临时放在AncestorsList中一起处理，最后再移出来
+                            AncestorsList.append({"id": ObjectRef_ID, "type": ObjectRef_Type, "name": ObjectRef_Name, "path": ObjectRef_WwisePath, "filePath": ObjectRef_WorkUnitPath})
+
+                            # 将ObjectRef的全部子对象临时放在AncestorsList中一起处理，最后再移出来
+                            AllChildrenList = self.get_Paths_of_DescendantChildren(ObjectRef_ID)
+                            AncestorsList += AllChildrenList
+
+                            # 抓取最父级容器类型提前标记
+                            parMark = 0
+                            for ancestor in AncestorsList:
+                                ancestor["ifModified"] = {"Bool": "", "Property": [], "Reference": []}
+                                ancestor["ifBeenRemoteAffected"] = {"Bool": "", "Items": []}
+                                if os.path.isdir(ancestor["filePath"]):  # 避开实体文件夹对象
+                                    pass
+                                else:
+                                    tree = ET.parse(ancestor["filePath"])
+                                    root = tree.getroot()
+                                    for elem in root.iter("WwiseDocument"):
+                                        for child in elem.iter():
+                                            if "ID" in child.attrib and "Name" in child.attrib:
+                                                if child.attrib.get("Name") == ancestor["name"] and child.attrib.get("ID") == ancestor["id"]:
+                                                    # 到这里，说明找到了目标ObjectRef，可继续查询ObjectRef极其父级的PropertyList、ReferenceList、StateInfo
+                                                    for obja in child:
+                                                        for PropertyItem in obja:
+                                                            PropertyListGroup = {"Name": "", "Value": "", "Child": []}
+                                                            if PropertyItem.tag == "Property":
+                                                                PropertyListGroup["Name"] = PropertyItem.attrib.get("Name")
+                                                                if len(PropertyItem) == 0:
+                                                                    PropertyListGroup["Value"] = PropertyItem.attrib.get("Value")
+                                                                    ancestor["ifModified"]["Property"].append(PropertyListGroup)
+                                                                else:
+                                                                    for secChild in PropertyItem:
+                                                                        for values in secChild:
+                                                                            if secChild.tag == "ValueList":  # 检测到是一个Value值
+                                                                                valueList = []
+                                                                                for value in values.iter("Value"):
+                                                                                    valueList.append(value.text)
+                                                                                if len(valueList) == 1:
+                                                                                    PropertyListGroup["Value"] = valueList[0]
+                                                                                elif len(valueList) > 1:
+                                                                                    PropertyListGroup["Value"] = valueList
+                                                                                # secChildDict["Value"] = values.text
+                                                                            elif secChild.tag == "RTPCList":  # 检测到有RTPC参与
+                                                                                secChildDict = {"Type": secChild.tag, "Value": ""}
+                                                                                rtpcDict = {"Name": "", "ID": "", "Curve": []}
+                                                                                for rtpcObjectRef in secChild.iter("ObjectRef"):
+                                                                                    rtpcDict["Name"] = rtpcObjectRef.attrib.get("Name")
+                                                                                    rtpcDict["ID"] = rtpcObjectRef.attrib.get("ID")
+                                                                                for rtpcCurves in secChild.iter("Curve"):
+                                                                                    for point in rtpcCurves.iter("Point"):
+                                                                                        rtpcDict["Curve"].append([point[0].text, point[1].text, point[2].text])
+                                                                                secChildDict["Value"] = rtpcDict
+                                                                                PropertyListGroup["Child"].append(secChildDict)
+
+                                                                    ancestor["ifModified"]["Property"].append(PropertyListGroup)
+
+                                                    if parMark == 1 and ancestor["type"] != "WorkUnit" and ancestor["type"] != "Folder":
+                                                        # 在这里需要根据Override的情况，来移除无效的变更（因为wwu里有时候有变更，但父级如果没有处于Override状态时，相关的数据不生效）
+                                                        tempPropertyNameList = []
+                                                        for xxx in ancestor["ifModified"]["Property"]:
+                                                            tempPropertyNameList.append(xxx["Name"])
+
+                                                        readyToBeRemoved = []
+                                                        for item in ancestor["ifModified"]["Property"]:
+                                                            if item["Name"] in global_OverrideKeywordDict:
+                                                                if global_OverrideKeywordDict[item["Name"]] not in tempPropertyNameList:
+                                                                    readyToBeRemoved.append(item)
+
+                                                        ancestor["ifModified"]["Property"] = [x for x in ancestor["ifModified"]["Property"] if x not in readyToBeRemoved]
+
+                                                    for objb in child:
+                                                        for ReferenceList in objb:
+                                                            if ReferenceList.tag == "Reference":
+                                                                curRefName = ReferenceList.attrib.get("Name")
+                                                                for childd in ReferenceList:
+                                                                    # 在这里要补充判断，因为可能它的信息还在Custom-CreatedFrom子对象里
+                                                                    curObjRefName = childd.attrib.get("Name")
+                                                                    curObjRefID = childd.attrib.get("ID")
+                                                                    curObjRefProperty = []
+                                                                    if curObjRefID is None:  # 说明存在custom相关的子对象，需要进一步获取细节信息
+                                                                        for actualItem in childd:
+                                                                            actualItem_Name = actualItem.attrib.get("Name")
+                                                                            actualItem_ID = actualItem.attrib.get("ID")
+                                                                            if actualItem_Name is not None and actualItem_ID is not None:  # 说明找到了Custom子对象
+                                                                                curObjRefName = actualItem_Name
+                                                                                curObjRefID = actualItem_ID
+
+                                                                            # 进一步针对Attenuation和Conversion类型做出Property的区别归纳
+                                                                            if actualItem.tag == "Conversion":
+                                                                                for PropertyItem in actualItem.iter("Property"):
+                                                                                    PropertyListGroup = {"Name": PropertyItem.attrib.get("Name"), "Type": PropertyItem.attrib.get("Type"), "ValueList": []}
+                                                                                    if len(PropertyItem) == 0:
+                                                                                        pass
+                                                                                    else:
+                                                                                        for secChild in PropertyItem.iter("Value"):
+                                                                                            secChildDict = {"Value": secChild.text, "Platform": secChild.attrib.get("Platform")}
+                                                                                            PropertyListGroup["ValueList"].append(secChildDict)
+                                                                                    curObjRefProperty.append(PropertyListGroup)
+
+                                                                                for PropertyItem in actualItem.iter("ConversionPluginInfo"):
+                                                                                    ConversionPluginInfoDict = {"Platform": PropertyItem.attrib.get("Platform"), "ConversionPlugin": []}
+                                                                                    for ConversionPlugin in PropertyItem.iter("ConversionPlugin"):
+                                                                                        ConversionPluginInfo = {"Name": ConversionPlugin.attrib.get("Name"), "ID": ConversionPlugin.attrib.get("ID"), "PluginName": ConversionPlugin.attrib.get("PluginName"),
+                                                                                                                "CompanyID": ConversionPlugin.attrib.get("CompanyID"), "PluginID": ConversionPlugin.attrib.get("PluginID")}
+                                                                                        ConversionPluginInfoDict["ConversionPlugin"].append(ConversionPluginInfo)
+                                                                                    curObjRefProperty.append(ConversionPluginInfoDict)
+
+                                                                            elif actualItem.tag == "Attenuation":
+                                                                                for PropertyItems in actualItem.iter("PropertyList"):
+                                                                                    for PropertyItem in PropertyItems:
+                                                                                        # 排除无用的Flags信息
+                                                                                        curPropertyName = PropertyItem.attrib.get("Name")
+                                                                                        if curPropertyName != "Flags":
+                                                                                            PropertyListGroup = {"Name": curPropertyName, "Value": "", "Child": []}
+                                                                                            if len(PropertyItem) == 0:  # 说明不存在ValueList和RTPCList，直接获取Value值即可
+                                                                                                PropertyListGroup["Value"] = PropertyItem.attrib.get("Value")
+                                                                                            else:  # 说明存在ValueList（或者RTPCList)
+                                                                                                for secChild in PropertyItem:
+                                                                                                    if secChild.tag == "ValueList":  # 对于ValueList组而言
+                                                                                                        valueList = []
+                                                                                                        for values in secChild.iter("Value"):
+                                                                                                            valueList.append(values.text)
+                                                                                                        if len(valueList) == 1:
+                                                                                                            PropertyListGroup["Value"] = valueList[0]
+                                                                                                        elif len(valueList) > 1:
+                                                                                                            PropertyListGroup["Value"] = valueList
+
+                                                                                                    elif secChild.tag == "RTPCList":  # 检测到有RTPC参与
+                                                                                                        secChildDict = {"Type": secChild.tag, "Value": ""}
+                                                                                                        # for values in secChild.iter("RTPCList"):
+                                                                                                        rtpcDict = {"Name": "", "ID": "", "Curve": []}
+                                                                                                        for rtpcObjectRef in secChild.iter("ObjectRef"):
+                                                                                                            rtpcDict["Name"] = rtpcObjectRef.attrib.get("Name")
+                                                                                                            rtpcDict["ID"] = rtpcObjectRef.attrib.get("ID")
+                                                                                                        for rtpcCurves in secChild.iter("Curve"):
+                                                                                                            for point in rtpcCurves.iter("Point"):
+                                                                                                                rtpcDict["Curve"].append([point[0].text, point[1].text, point[2].text])
+                                                                                                        secChildDict["Value"] = rtpcDict
+                                                                                                        PropertyListGroup["Child"].append(secChildDict)
+                                                                                            curObjRefProperty.append(PropertyListGroup)
+
+                                                                                for listGroup in actualItem.iter("CurveUsageInfoList"):
+                                                                                    for obj in listGroup:
+                                                                                        objTag = obj.tag
+                                                                                        groupInfo = {"Type": objTag}
+                                                                                        for CurveUsageInfo in obj:
+                                                                                            groupInfo["Platform"] = CurveUsageInfo.attrib.get("Platform")
+                                                                                            groupInfo["CurveToUse"] = CurveUsageInfo.attrib.get("CurveToUse")
+                                                                                            # 如果还有子对象，说明有Curve的具体数据存在
+                                                                                            if len(CurveUsageInfo) != 0:
+                                                                                                for curveInfo in CurveUsageInfo:
+                                                                                                    curveName = curveInfo.attrib.get("Name")
+                                                                                                    curveID = curveInfo.attrib.get("ID")
+                                                                                                    curveRootInfo = {"Name": curveName, "ID": curveID, "PointList": []}
+                                                                                                    for point in curveInfo.iter("Point"):
+                                                                                                        curveRootInfo["PointList"].append([point[0].text, point[1].text, point[2].text])
+                                                                                                    groupInfo["CurveInfo"] = curveRootInfo
+                                                                                        curObjRefProperty.append(groupInfo)
+
+                                                                    if parMark == 1 and ancestor["type"] != "WorkUnit" and ancestor["type"] != "Folder":
+                                                                        if curRefName in global_OverrideKeywordDict:
+                                                                            # 需要补充判断PropertyList中是否是Override状态，否则即便有也等于是不生效的值，则不记录
+                                                                            overrideMark = 0
+                                                                            for item in ancestor["ifModified"]["Property"]:
+                                                                                if item["Name"] == global_OverrideKeywordDict[curRefName]:
+                                                                                    overrideMark = 1
+
+                                                                            if overrideMark == 1:
+                                                                                ancestor["ifModified"]["Reference"].append({"Type": curRefName, "Name": curObjRefName, "ID": curObjRefID, "Property": curObjRefProperty})
+                                                                        else:
+                                                                            ancestor["ifModified"]["Reference"].append({"Type": curRefName, "Name": curObjRefName, "ID": curObjRefID, "Property": curObjRefProperty})
+                                                                    else:
+                                                                        # 对ObjectRef的Reference进行默认值判断
+                                                                        if curRefName == "Conversion":
+                                                                            if curObjRefName == "Default Conversion Settings":
+                                                                                pass
+                                                                            else:
+                                                                                ancestor["ifModified"]["Reference"].append({"Type": curRefName, "Name": curObjRefName, "ID": curObjRefID, "Property": curObjRefProperty})
+                                                                        elif curRefName == "OutputBus":
+                                                                            if curObjRefName == global_RootBusString:
+                                                                                pass
+                                                                            else:
+                                                                                ancestor["ifModified"]["Reference"].append({"Type": curRefName, "Name": curObjRefName, "ID": curObjRefID, "Property": curObjRefProperty})
+                                                                        elif curRefName == "AudioDevice":
+                                                                            if curObjRefName == "System":
+                                                                                pass
+                                                                            else:
+                                                                                ancestor["ifModified"]["Reference"].append({"Type": curRefName, "Name": curObjRefName, "ID": curObjRefID, "Property": curObjRefProperty})
+                                                                        else:
+                                                                            ancestor["ifModified"]["Reference"].append({"Type": curRefName, "Name": curObjRefName, "ID": curObjRefID, "Property": curObjRefProperty})
+
+                                                    for objc in child:
+                                                        for States in objc:
+                                                            CustomStateList = []
+                                                            if States.tag == "CustomStateList":
+                                                                for CustomState in States:
+                                                                    StateRefInfo = {"Name": "", "ID": "", "Property": []}
+                                                                    for tagA in CustomState:
+                                                                        if tagA.tag == "StateRef":
+                                                                            StateRefInfo["Name"] = tagA.attrib.get("Name")
+                                                                            StateRefInfo["ID"] = tagA.attrib.get("ID")
+                                                                        if tagA.tag == "CustomState":
+                                                                            for Property in tagA.iter("Property"):
+                                                                                StateRefInfo["Property"].append({"Name": Property.attrib.get("Name"), "Value": Property.attrib.get("Value")})
+                                                                    CustomStateList.append(StateRefInfo)
+                                                                ancestor["ifModified"]["Reference"].append({"StatePropertyInfo": CustomStateList})
+
+                                                            if States.tag == "StateGroupList":
+                                                                for StateGroupRef in States.iter("StateGroupRef"):
+                                                                    StateGroupRef_Name = StateGroupRef.attrib.get("Name")
+                                                                    StateGroupRef_ID = StateGroupRef.attrib.get("ID")
+                                                                    StateObjs = self.get_Paths_of_Children(StateGroupRef_ID)
+                                                                    PropertyList = []
+                                                                    for i in StateObjs:
+                                                                        if i["name"] != "None":
+                                                                            PropertyList.append({"Name": i["name"], "ID": i["id"], "Property": ""})
+
+                                                                    ancestor["ifModified"]["Reference"].append({"Type": "StateGroupRef", "Name": StateGroupRef_Name, "ID": StateGroupRef_ID, "Property": PropertyList})
+
+                                                    # 整理ancestor["ifModified"]["Reference"]里的States信息
+                                                    stateExistsFlag = 0
+                                                    StatePropertyInfo = {}
+                                                    for item in ancestor["ifModified"]["Reference"]:
+                                                        if item.get("StatePropertyInfo"):
+                                                            stateExistsFlag = 1
+                                                            StatePropertyInfo = item["StatePropertyInfo"]
+
+                                                    if stateExistsFlag == 1:
+                                                        newReferenceInfo = []
+                                                        oriReferenceInfo = ancestor["ifModified"]["Reference"]
+                                                        for i in oriReferenceInfo:
+                                                            if i.get("StatePropertyInfo", "@#$") == "@#$":
+                                                                if i.get("Type") == "StateGroupRef":
+                                                                    for stateChild in i["Property"]:
+                                                                        stateChildID = stateChild["ID"]
+                                                                        for k in StatePropertyInfo:
+                                                                            if k["ID"] == stateChildID:
+                                                                                stateChild["Property"] = k["Property"]
+                                                                    newReferenceInfo.append(i)
+                                                                else:
+                                                                    newReferenceInfo.append(i)
+                                                        ancestor["ifModified"]["Reference"] = newReferenceInfo
+
+                                                    for objd in child:
+                                                        for GroupingObj in objd:
+                                                            if GroupingObj.tag == "GroupingList":
+                                                                groupList = []
+                                                                for Grouping in GroupingObj:
+                                                                    groupDict = {}
+                                                                    for SwitchRef in Grouping:
+                                                                        if SwitchRef.tag == "SwitchRef":
+                                                                            groupDict["Name"] = SwitchRef.attrib.get("Name")
+                                                                            groupDict["ID"] = SwitchRef.attrib.get("ID")
+                                                                        if SwitchRef.tag == "ItemList":
+                                                                            itemList = []
+                                                                            for item in SwitchRef:
+                                                                                itemList.append({"Name": item.attrib.get("Name"), "ID": item.attrib.get("ID")})
+                                                                            groupDict["ItemRef"] = itemList
+                                                                    groupList.append(groupDict)
+
+                                                                for item in ancestor["ifModified"]["Reference"]:
+                                                                    if item["Type"] == "SwitchGroupOrStateGroup":
+                                                                        item["Child"] = groupList
+
+                                                    for obje in child:
+                                                        for BlendTrackList in obje:
+                                                            if BlendTrackList.tag == "BlendTrack":
+                                                                ancestor["ifModified"]["Reference"].append({"Type": "BlendTrack", "Name": BlendTrackList.attrib.get("Name"), "ID": BlendTrackList.attrib.get("ID")})
+
+                                                    if ancestor["type"] == "AudioFileSource":
+                                                        pathHead = ""
+                                                        wavName = ""
+                                                        for objf in child.iter("Language"):
+                                                            pathHead = objf.text
+                                                        for objg in child.iter("AudioFile"):
+                                                            wavName = objg.text
+                                                        shortWavPath = pathHead + "\\" + wavName
+                                                        if pathHead != "":
+                                                            ancestor["wavPath"] = global_OriginalsPath + shortWavPath
+
+                                                    if ancestor["type"] == "Sound":
+                                                        for objh in child.iter("ActiveSourceList"):
+                                                            for ActiveSource in objh.iter("ActiveSource"):
+                                                                info = {"Name": ActiveSource.attrib.get("Name"), "ID": ActiveSource.attrib.get("ID"), "Platform": ActiveSource.attrib.get("Platform")}
+                                                                ancestor["ActiveSource"] = info
+
+                                    event_info_dict[tarName]["ActionList"][ActionGUID]["ObjectRef"]["Parents"].append(ancestor)
+                                    if ancestor["type"] != "WorkUnit" and ancestor["type"] != "Folder":
+                                        parMark = 1
+
+                            # 统计Property和Reference的数量，为每一个对象写入Bool的值 --------------------------------------------------------------------------------------
+                            if event_info_dict[tarName]["ActionList"][ActionGUID]["ObjectRef"]["type"] != "Event":  # 避开Event作为Action的ObjectRef的情况
+                                for i in event_info_dict[tarName]["ActionList"][ActionGUID]["ObjectRef"]["Parents"]:
+                                    # LOG.info(i)
+                                    if len(i["ifModified"]["Property"]) != 0 or len(i["ifModified"]["Reference"]) != 0:
+                                        i["ifModified"]["Bool"] = "True"
+                                        # ModifiedItemList.append({"id": i["id"], "type": i["type"], "name": i["name"], "path": i["path"], "ModifiedCount_Property": len(i["ifModified"]["Property"]), "ModifiedCount_Reference": len(i["ifModified"]["Reference"])})
+                                        ModifiedItemList.append({"id": i["id"], "type": i["type"], "name": i["name"], "path": i["path"], "ModifiedCount_Property": i["ifModified"]["Property"], "ModifiedCount_Reference": i["ifModified"]["Reference"]})
+
+                            # ifBeenRemoteAffected（判断当前的Action的ObjectRef自身，是否同时出现在其他Event中、或者跟随其他Action多次出现在当前的Event中）
+                            referenceResult = self.get_Paths_of_referencesTo(ObjectRef_ID)
+                            if referenceResult is not None:
+                                if len(referenceResult) == 1:
+                                    pass
+                                elif len(referenceResult) > 1:
+                                    event_info_dict[tarName]["ActionList"][ActionGUID]["ifBeenRemoteAffected"]["Bool"] = "True"
+                                    for i in referenceResult:
+                                        if i["id"] != ActionGUID:
+                                            event_info_dict[tarName]["ActionList"][ActionGUID]["ifBeenRemoteAffected"]["Items"].append(i)
+
+                            # ifBeenRemoteAffected（判断当前的每一个对象，是否受到Switch、State、RTPC的影响，单独整理出一份数据）
+                            for freshItem in AncestorsList:
+                                curPropertyList = freshItem["ifModified"]["Property"]
+                                curReferenceList = freshItem["ifModified"]["Reference"]
+                                ifBeenRemoteAffectedFlag = 0
+
+                                for propertyItem in curPropertyList:
+                                    if len(propertyItem.get("Child", "")) != 0:
+                                        for k in propertyItem["Child"]:
+                                            if k.get("Type", "@#$") == "RTPCList":
+                                                freshItem["ifBeenRemoteAffected"]["Items"].append(propertyItem)
+                                                event_info_dict[tarName]["ActionList"][ActionGUID]["ObjectRef"]["ifBeenRemoteAffected"]["Items"].append({freshItem["path"]: propertyItem})
+                                                ifBeenRemoteAffectedFlag = 1
+                                                continue
+
+                                for ReferenceItem in curReferenceList:
+                                    if ReferenceItem.get("Type", "@#$") == "SwitchGroupOrStateGroup" or ReferenceItem.get("Type", "@#$") == "StateGroupRef":
+                                        freshItem["ifBeenRemoteAffected"]["Items"].append(ReferenceItem)
+                                        event_info_dict[tarName]["ActionList"][ActionGUID]["ObjectRef"]["ifBeenRemoteAffected"]["Items"].append({freshItem["path"]: ReferenceItem})
+                                        ifBeenRemoteAffectedFlag = 1
+                                    else:
+                                        if type(ReferenceItem.get("Property", "@#$")) is list:
+                                            for i in ReferenceItem["Property"]:
+                                                if len(i.get("Child", "")) != 0:
+                                                    for k in i["Child"]:
+                                                        if k.get("Type", "@#$") == "RTPCList":
+                                                            freshItem["ifBeenRemoteAffected"]["Items"].append(i)
+                                                            event_info_dict[tarName]["ActionList"][ActionGUID]["ObjectRef"]["ifBeenRemoteAffected"]["Items"].append({freshItem["path"]: i})
+                                                            ifBeenRemoteAffectedFlag = 1
+                                                            continue
+
+                                if ifBeenRemoteAffectedFlag == 1:
+                                    event_info_dict[tarName]["ActionList"][ActionGUID]["ObjectRef"]["ifBeenRemoteAffected"]["Bool"] = "True"
+
+                            # 先判断ObjectRef类型是不是非Bus、AuxBus
+                            ChildrenCount = len(AllChildrenList)
+                            if ObjectRef_Type in ["Bus", "AuxBus"]:
+                                event_info_dict[tarName]["ActionList"][ActionGUID]["ObjectRef"]["Parents"] = AncestorsList[0:-1]
+                            elif ObjectRef_Type == "Event":
+                                event_info_dict[tarName]["ActionList"][ActionGUID]["ObjectRef"]["Parents"] = event_info_dict[tarName]["ActionList"][ActionGUID]["ObjectRef"]["Parents"][0: -(ChildrenCount + 1)]
+                            else:  # 将ObjectRef临时放在AncestorsList中的子对象信息，移动到Children、Parents
+                                event_info_dict[tarName]["ActionList"][ActionGUID]["ObjectRef"]["Children"] = AncestorsList[-ChildrenCount:]
+                                event_info_dict[tarName]["ActionList"][ActionGUID]["ObjectRef"]["Parents"] = event_info_dict[tarName]["ActionList"][ActionGUID]["ObjectRef"]["Parents"][0: -ChildrenCount]
+
+                                # 将ObjectRef临时放在AncestorsList中的自身的信息，移动到Parent
+                                ParentList = event_info_dict[tarName]["ActionList"][ActionGUID]["ObjectRef"]["Parents"]
+                                if len(ParentList) != 0:  # 这里可能指派的是BUS类型，需要单独判断下
+                                    ObjectRefInfo = event_info_dict[tarName]["ActionList"][ActionGUID]["ObjectRef"]["Parents"][-1]
+                                    event_info_dict[tarName]["ActionList"][ActionGUID]["ObjectRef"]["ifModified"] = ObjectRefInfo["ifModified"]
+                                    event_info_dict[tarName]["ActionList"][ActionGUID]["ObjectRef"]["Parents"] = event_info_dict[tarName]["ActionList"][ActionGUID]["ObjectRef"]["Parents"][0:-1]
+
+                                # 进一步给Children的List做分组判断 ---------------------------------------------------------------------------------------------
+                                curChildrenList = event_info_dict[tarName]["ActionList"][ActionGUID]["ObjectRef"]["Children"]
+                                if len(curChildrenList) != 0:
+                                    event_info_dict[tarName]["ActionList"][ActionGUID]["ObjectRef"]["Children"] = merge_children(curChildrenList)
+
+                        # Action的 Property层
+                        for EventName in Action.iter("Property"):
+                            Property_Name = EventName.attrib.get("Name", "@#$")
+                            Property_Value = EventName.attrib.get("Value", "1")
+                            if Property_Name not in ["ActionType"]:
+                                propertyGroup = {"Name": Property_Name, "Value": Property_Value}
+                                event_info_dict[tarName]["ActionList"][ActionGUID]["ifModified"]["Property"].append(propertyGroup)
+                                # print(EventName.attrib.get("Name") + ": " + EventName.attrib.get("Value"))
+
+                            # 补充ActionType实际字符串
+                            if Property_Name == "ActionType":
+                                event_info_dict[tarName]["ActionList"][ActionGUID]["Type"] = Get_EventPropertyTypeString_From_ActionValueStr(Property_Value)
+
+                        # 将Action的Property判断也加入ModifiedItemList
+                        actionPropertyList = event_info_dict[tarName]["ActionList"][ActionGUID]["ifModified"]["Property"]
+                        if len(actionPropertyList) != 0:
+                            event_info_dict[tarName]["ActionList"][ActionGUID]["ifModified"]["Bool"] = "True"
+                            ModifiedItemList.insert(0, {"id": ActionGUID, "type": "Action", "ModifiedCount_Property": len(actionPropertyList)})
+
+                        # 将ModifiedItemList并入ChildrenBeenModifiedList
+                        if len(ModifiedItemList) != 0:
+                            ChildrenBeenModifiedList.append(ModifiedItemList)
+
+                    # ifChildrenBeenModified（将ChildrenBeenModifiedList检查结果写入EventInfo）
+                    if len(ChildrenBeenModifiedList) != 0:
+                        event_info_dict[tarName]["ifChildrenBeenModified"]["Bool"] = "True"
+                        event_info_dict[tarName]["ifChildrenBeenModified"]["Items"] = ChildrenBeenModifiedList
+
+                    # ifChildrenBeenModified_BUS（基于ifChildrenBeenModified，BUS专项补充检查）
+                    if event_info_dict[tarName]["ifChildrenBeenModified"]["Bool"] == "True":
+                        for actionGroupList in event_info_dict[tarName]["ifChildrenBeenModified"]["Items"]:
+                            for ModifiedItem in actionGroupList:
+                                curObjectRefPath = ModifiedItem.get("path")
+                                curObjectRefInfoGroup = {curObjectRefPath: []}
+                                referenceInfo = ModifiedItem.get("ModifiedCount_Reference", "")
+                                if len(referenceInfo) != 0:
+                                    for referenceItem in referenceInfo:
+                                        # 分类查询涉及BUS引用的对象，把BUS的信息分别提取出来
+                                        if referenceItem.get("Type") in ["OutputBus", "ReflectionsAuxSend"]:
+                                            curObjectRefInfoGroup[curObjectRefPath].append({"type": referenceItem["Type"], "name": referenceItem.get("Name"), "id": referenceItem.get("ID")})
+                                    # LOG.info(curObjectRefInfoGroup)
+                                    if len(curObjectRefInfoGroup[curObjectRefPath]) != 0:
+                                        # event_info_dict[tarName]["ifChildrenBeenModified_BUS"]["Bool"] = "True"
+                                        event_info_dict[tarName]["ifChildrenBeenModified_BUS"]["Items"].append(curObjectRefInfoGroup)
+
+                    # ifBeenAssignedToBank
+                    # 先获取Event的全部父级
+                    parentIDList = self.get_Paths_of_Ancestors(tarID)
+                    parentIDList.insert(0, {"id": tarID})
+
+                    bnkWWUPathList = []
+                    for ParentId in parentIDList:
+                        result = self.get_Paths_of_referencesTo(ParentId["id"])
+                        for bnkInfo in result:
+                            if bnkInfo.get("type") == "SoundBank":
+                                bnkWWUPathList.append(bnkInfo)
+
+                    if bnkWWUPathList is not None:
+                        if len(bnkWWUPathList) == 0:
+                            event_info_dict[tarName]["ifBeenAssignedToBank"]["Bool"] = "False"
+                        elif len(bnkWWUPathList) >= 1:
+                            event_info_dict[tarName]["ifBeenAssignedToBank"]["Bool"] = "True"
+                            for i in bnkWWUPathList:
+                                i["ExclusionInfo"] = []
+                                bnkWWUPath = i["filePath"]
+                                bnkModifiledDict = {"ObjectExclusionList": "", "GameSyncExclusionList": ""}
+                                treeee = ET.parse(bnkWWUPath)
+                                rootr = treeee.getroot()
+                                for elem in rootr.iter("WwiseDocument"):
+                                    for child in elem.iter():
+                                        if child.attrib.get("Name") == i["name"] and child.attrib.get("ID") == i["id"]:
+                                            # 到这里，说明找到了目标bnk对象，可继续查询ObjectExclusionList、GameSyncExclusionList
+                                            for subItemA in child.iter("ObjectExclusionList"):
+                                                ObjectExclusionList = []
+                                                for subI in subItemA:
+                                                    ObjectExclusionList.append({"Name": subI.attrib.get("Name"), "ID": subI.attrib.get("ID"), "WorkUnitID": subI.attrib.get("WorkUnitID")})
+                                                bnkModifiledDict["ObjectExclusionList"] = ObjectExclusionList
+
+                                            for subItemB in child.iter("GameSyncExclusionList"):
+                                                GameSyncExclusionList = []
+                                                for subG in subItemB:
+                                                    GameSyncExclusionList.append({"Name": subG.attrib.get("Name"), "ID": subG.attrib.get("ID"), "WorkUnitID": subG.attrib.get("WorkUnitID")})
+                                                bnkModifiledDict["GameSyncExclusionList"] = GameSyncExclusionList
+
+                                i["ExclusionInfo"].append(bnkModifiledDict)
+
+                                # 进一步判断Bank是否存在自定义设置
+                                if len(bnkModifiledDict["ObjectExclusionList"]) != 0 or len(bnkModifiledDict["GameSyncExclusionList"]) != 0:
+                                    event_info_dict[tarName]["ifBankBeenModified"]["Bool"] = "True"
+
+                                event_info_dict[tarName]["ifBeenAssignedToBank"]["Items"].append(i)
+                    else:
+                        event_info_dict[tarName]["ifBeenAssignedToBank"]["Bool"] = "False"
+
+                    # ifBeenRemoteAffected_ByActions/ifBeenRemoteAffected_ByVariables（每个ObjectRef的结果汇总到Event储存）
+                    ifBeenRemoteAffected_ByActions = []
+                    ifBeenRemoteAffected_ByVariables = []
+
+                    for action, infos in zip(event_info_dict[tarName]["ActionList"].keys(), event_info_dict[tarName]["ActionList"].values()):
+                        if len(infos["ifBeenRemoteAffected"]["Items"]) != 0:
+                            ifBeenRemoteAffected_ByActions.append({action: infos["ifBeenRemoteAffected"]["Items"]})
+
+                        if len(infos["ObjectRef"]["ifBeenRemoteAffected"]["Items"]) != 0:
+                            ifBeenRemoteAffected_ByVariables.append({action: infos["ObjectRef"]["ifBeenRemoteAffected"]["Items"]})
+
+                    if len(ifBeenRemoteAffected_ByActions) != 0:
+                        event_info_dict[tarName]["ifBeenRemoteAffected_ByActions"]["Items"] = ifBeenRemoteAffected_ByActions
+                        event_info_dict[tarName]["ifBeenRemoteAffected_ByActions"]["Bool"] = "True"
+
+                    if len(ifBeenRemoteAffected_ByVariables) != 0:
+                        event_info_dict[tarName]["ifBeenRemoteAffected_ByVariables"]["Items"] = ifBeenRemoteAffected_ByVariables
+                        event_info_dict[tarName]["ifBeenRemoteAffected_ByVariables"]["Bool"] = "True"
+
+                    # ifMultiAction
+                    typeList = []
+                    PathList = []
+
+                    ActionCount = len(event_info_dict[tarName]["ActionList"])
+                    if ActionCount == 0:
+                        event_info_dict[tarName]["ifMultiAction"]["Bool"] = "False"
+                    elif ActionCount == 1:
+                        pass
+                    elif ActionCount > 1:
+                        event_info_dict[tarName]["ifMultiAction"]["Bool"] = "True"
+                        for action, infos in zip(event_info_dict[tarName]["ActionList"].keys(), event_info_dict[tarName]["ActionList"].values()):
+                            if infos["Type"] == "":
+                                typeList.append("Play")
+                            else:
+                                typeList.append(infos["Type"])
+
+                            PathList.append(infos["ObjectRef"]["path"])
+                        event_info_dict[tarName]["ifMultiAction"]["Items"] = PathList
+
+                    # ifMultiActionType
+                    typeList = list(set(typeList))
+                    if len(typeList) > 1:
+                        event_info_dict[tarName]["ifMultiActionType"]["Bool"] = "True"
+                        event_info_dict[tarName]["ifMultiActionType"]["Items"] = typeList
+
+                    # ifSpecialActionType补充无ObjectRef类型
+                    for actionID, actionInfo in zip(event_info_dict[tarName]["ActionList"].keys(), event_info_dict[tarName]["ActionList"].values()):
+                        if actionInfo["ObjectRef"]["type"] not in ["BlendContainer", "Sound", "RandomSequenceContainer", "SwitchContainer"]:
+                            event_info_dict[tarName]["ifSpecialActionType"]["Bool"] = "True"
+                            event_info_dict[tarName]["ifSpecialActionType"]["Items"].append({"type": actionInfo["Type"], "path": actionInfo["ObjectRef"]["path"]})
+
+                    # ifActionSelfParadox (这里后续需要补充一种可能：ObjectRef之间的某个子对象或父对象之间，也存在矛盾关系)
+                    if len(PathList) != len(set(PathList)):
+                        event_info_dict[tarName]["ifActionSelfParadox"]["Items"] = find_duplicates(PathList)
+                        event_info_dict[tarName]["ifActionSelfParadox"]["Bool"] = "True"
+
+        # 打印诊断结果
+        ReportTextList = []
+        LOG.info("-----------------------------------------------")
+        if key["DevMode"] == "dev":
+            LOG.info(event_info_dict)
+        if len(ReportTextList) != 0:
+            LOG.info(ReportTextList)
+        else:
+            LOG.info(lan["GUI_LOG_DiagnoseEvent_Report"][L])
 
     def GetBNKNameFromEventStr(self, EventStr):
         FinalList = []
@@ -3270,7 +4841,7 @@ class SimpleWaapi:
         # Create WWUs
         for i in currentKeyStrList:
             args = {
-                "parent": "\\Actor-Mixer Hierarchy",
+                "parent": "\\" + global_actorString,
                 "type": "WorkUnit",
                 "name": "Audio_" + i,
                 "onNameConflict": "merge",
@@ -3305,7 +4876,7 @@ class SimpleWaapi:
                 ContainerType = "ActorMixer"
 
             args = {
-                "parent": "\\Actor-Mixer Hierarchy" + "\\Audio_" + i,
+                "parent": "\\" + global_actorString + "\\Audio_" + i,
                 "type": ContainerType,
                 "name": i,
                 "onNameConflict": "merge",
@@ -3394,7 +4965,7 @@ class SimpleWaapi:
                 pass
             else:
                 args = {
-                    "object": "\\Actor-Mixer Hierarchy\\Audio_" + i + "\\" + i,
+                    "object": "\\" + global_actorString + "\\Audio_" + i + "\\" + i,
                     "reference": "Conversion",
                     "value": KeyDict[i]["Property_Conversion"]
                 }
@@ -3408,14 +4979,14 @@ class SimpleWaapi:
                     pass
                 else:
                     args = {
-                        "object": "\\Actor-Mixer Hierarchy\\Audio_" + i + "\\" + i,
+                        "object": "\\" + global_actorString + "\\Audio_" + i + "\\" + i,
                         "property": "3DSpatialization",
                         "value": "2"
                     }
                     self.GO.call("ak.wwise.core.object.setProperty", args)
 
                     args = {
-                        "object": "\\Actor-Mixer Hierarchy\\Audio_" + i + "\\" + i,
+                        "object": "\\" +  global_actorString + "\\Audio_" + i + "\\" + i,
                         "reference": "Attenuation",
                         "value": KeyDict[i]["Property_Positioning"]
                     }
@@ -3436,7 +5007,7 @@ class SimpleWaapi:
 
         # Create WWUs
         args = {
-            "parent": "\\Actor-Mixer Hierarchy",
+            "parent": "\\"+ global_actorString,
             "type": "WorkUnit",
             "name": "Audio_" + i,
             "onNameConflict": "merge",
@@ -3470,7 +5041,7 @@ class SimpleWaapi:
             ContainerType = "ActorMixer"
 
         args = {
-            "parent": "\\Actor-Mixer Hierarchy" + "\\Audio_" + i,
+            "parent": "\\" + global_actorString + "\\Audio_" + i,
             "type": ContainerType,
             "name": i,
             "onNameConflict": "merge",
@@ -3563,7 +5134,7 @@ class SimpleWaapi:
                 LOG.warning(lan["LOG_WG_def_CreateBasic_ObjectNotExist"][L] + KeyDict["Property_Conversion"])
             else:
                 args = {
-                    "object": "\\Actor-Mixer Hierarchy\\Audio_" + i + "\\" + i,
+                    "object": "\\" + global_actorString + "\\Audio_" + i + "\\" + i,
                     "reference": "Conversion",
                     "value": KeyDict["Property_Conversion"]
                 }
@@ -3581,14 +5152,14 @@ class SimpleWaapi:
                     LOG.warning(lan["LOG_WG_def_CreateBasic_ObjectNotExist"][L] + KeyDict["Property_Positioning"])
                 else:
                     args = {
-                        "object": "\\Actor-Mixer Hierarchy\\Audio_" + i + "\\" + i,
+                        "object": "\\" +  global_actorString + "\\Audio_" + i + "\\" + i,
                         "property": "3DSpatialization",
                         "value": "2"
                     }
                     self.GO.call("ak.wwise.core.object.setProperty", args)
 
                     args = {
-                        "object": "\\Actor-Mixer Hierarchy\\Audio_" + i + "\\" + i,
+                        "object": "\\"+ global_actorString + "\\Audio_" + i + "\\" + i,
                         "reference": "Attenuation",
                         "value": KeyDict["Property_Positioning"]
                     }
@@ -3607,7 +5178,7 @@ class SimpleWaapi:
         RootBus = ["SFX", "Music", "VO", "CG"]
         for i in range(len(RootBus)):
             args = {
-                "parent": "\\Master-Mixer Hierarchy\\Default Work Unit\\Master Audio Bus",
+                "parent": "\\" + global_busString + "\\Default Work Unit\\" + global_RootBusString,
                 "type": "Bus",
                 "name": RootBus[i],
                 "onNameConflict": "merge",
@@ -3623,7 +5194,7 @@ class SimpleWaapi:
 
         # SFX --> Action:PC/NPC BUS
         args = {
-            "parent": "\\Master-Mixer Hierarchy\\Default Work Unit\\Master Audio Bus\\SFX",
+            "parent": "\\" + global_busString + "\\Default Work Unit\\" + global_RootBusString + "\\SFX",
             "type": "Bus",
             "name": "Action",
             "onNameConflict": "merge",
@@ -3651,7 +5222,7 @@ class SimpleWaapi:
 
         # SFX --> Amb BUS
         args = {
-            "parent": "\\Master-Mixer Hierarchy\\Default Work Unit\\Master Audio Bus\\SFX",
+            "parent": "\\" + global_busString + "\\Default Work Unit\\" + global_RootBusString + "\\SFX",
             "type": "Bus",
             "name": "Amb",
             "onNameConflict": "merge",
@@ -3667,7 +5238,7 @@ class SimpleWaapi:
 
         # SFX --> UI BUS
         args = {
-            "parent": "\\Master-Mixer Hierarchy\\Default Work Unit\\Master Audio Bus\\SFX",
+            "parent": "\\" + global_busString + "\\Default Work Unit\\" + global_RootBusString + "\\SFX",
             "type": "Bus",
             "name": "UI",
             "onNameConflict": "merge",
@@ -3732,7 +5303,7 @@ class SimpleWaapi:
         # 创建Bus -------------------------------------------------------------------------
         # 先判断Wwise工程中是否已存在自定义Bus，如果没有，再写入
         currentBusList = self.get_Paths_of_Descendants("BUS")
-        if len(currentBusList) == 1 and currentBusList[0] == "\\Master-Mixer Hierarchy\\Default Work Unit\\Master Audio Bus":
+        if len(currentBusList) == 1 and currentBusList[0] == "\\" + global_busString + "\\Default Work Unit\\" + global_RootBusString:
             waapiStatusResult = self.CreateBus_From_DictStructure()
 
             # 检查并写入WaapiStatus状态标记
@@ -3873,7 +5444,7 @@ class SimpleWaapi:
                 args = {
                     "objects": [
                         {
-                            "object": "\\Master-Mixer Hierarchy\\Default Work Unit\\Master Audio Bus",
+                            "object": "\\" + global_busString + "\\Default Work Unit\\" + global_RootBusString,
                             "@RTPC": [
                                 {
                                     "type": "RTPC",
@@ -3913,7 +5484,7 @@ class SimpleWaapi:
                 args = {
                     "objects": [
                         {
-                            "object": "\\Master-Mixer Hierarchy\\Default Work Unit\\Master Audio Bus\\Music",
+                            "object": "\\" + global_busString + "\\Default Work Unit\\" + global_RootBusString + "\\Music",
                             "@RTPC": [
                                 {
                                     "type": "RTPC",
@@ -3953,7 +5524,7 @@ class SimpleWaapi:
                 args = {
                     "objects": [
                         {
-                            "object": "\\Master-Mixer Hierarchy\\Default Work Unit\\Master Audio Bus\\SFX",
+                            "object": "\\" + global_busString + "\\Default Work Unit\\" + global_RootBusString + "\\SFX",
                             "@RTPC": [
                                 {
                                     "type": "RTPC",
@@ -3993,7 +5564,7 @@ class SimpleWaapi:
                 args = {
                     "objects": [
                         {
-                            "object": "\\Master-Mixer Hierarchy\\Default Work Unit\\Master Audio Bus\\VO",
+                            "object": "\\" + global_busString + "\\Default Work Unit\\" + global_RootBusString + "\\VO",
                             "@RTPC": [
                                 {
                                     "type": "RTPC",
@@ -4205,14 +5776,14 @@ class SimpleWaapi:
         LOG.info(lan["LOG_WG_def_CreateBasic_CreateMeter"][L])
 
         # 创建模板路径
-        resetPath = "\\Actor-Mixer Hierarchy\\Default Work Unit\\UserDefinedTemplate"
+        resetPath = "\\" + global_actorString + "\\Default Work Unit\\UserDefinedTemplate"
         result = self.get_GUIDOfPath(resetPath)
         if result is not None and len(result) != 0:
             LOG.info(lan["LOG_WG_def_CreateBasic_ExistObject"][L] + resetPath)
             LOG.info(lan["LOG_WG_def_CreateBasic_UserDefinedTemplate"][L])
         else:
             args = {
-                "parent": "\\Actor-Mixer Hierarchy\\Default Work Unit",
+                "parent": "\\" +  global_actorString + "\\Default Work Unit",
                 "type": "ActorMixer",
                 "name": "UserDefinedTemplate",
                 "onNameConflict": "merge",
@@ -6245,7 +7816,7 @@ class SimpleWaapi:
 
     def Check_IfKeyStrWWUInWwise(self, keystr):
         if len(keystr) != 0:
-            possiblePath_Actor = "\\Actor-Mixer Hierarchy\\Audio_" + keystr + "\\" + keystr
+            possiblePath_Actor = "\\" + global_actorString + "\\Audio_" + keystr + "\\" + keystr
             possiblePath_Event = "\\Events\\Event_" + keystr
             possiblePath_Bank = "\\SoundBanks\\Bank_" + keystr + "\\" + "Bank_" + keystr
             possiblePathList = [possiblePath_Actor, possiblePath_Event, possiblePath_Bank]

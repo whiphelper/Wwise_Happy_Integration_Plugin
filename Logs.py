@@ -193,6 +193,10 @@ lan = {
         "English": "Show/Hide Preference",
         "Chinese": "显示/隐藏 偏好设置"
     },
+    "GUI_action_ShowHide_SearchText": {
+        "English": "Show/Hide Search Text",
+        "Chinese": "显示/隐藏 文本搜索框"
+    },
     "GUI_action_Undo": {
         "English": "Undo",
         "Chinese": "撤销"
@@ -314,8 +318,8 @@ lan = {
         "Chinese": "关于版本"
     },
     "GUI_action_VersionInfo_InfoText": {
-        "English": "Software Name: Wwise Happy Integration Plugin (WHIP)\nCurrent Version: 2.0.1\nDeveloper: whiphelper\nContact: whiphelper@gmail.com",
-        "Chinese": "软件名称：Wwise闪电分身\n当前版本：2.0.1\n开发人员：whiphelper\n联系方式：whiphelper@gmail.com"
+        "English": "Software Name: Wwise Happy Integration Plugin (WHIP)\nCurrent Version: 2.0.2\nDeveloper: whiphelper\nContact: whiphelper@gmail.com",
+        "Chinese": "软件名称：Wwise闪电分身\n当前版本：2.0.2\n开发人员：whiphelper\n联系方式：whiphelper@gmail.com"
     },
     "GUI_action_DevMode": {
         "English": "Dev Mode",
@@ -453,6 +457,10 @@ lan = {
         "English": "Breakdown Event",
         "Chinese": "展开Event"
     },
+    "GUI_SM_RC_action_DiagnoseEvent": {
+        "English": "Diagnose Event",
+        "Chinese": "诊断Event"
+    },
     "GUI_SM_RC_action_RenewNotesForEvents": {
         "English": "Renew Notes",
         "Chinese": "更新Event的Notes"
@@ -469,9 +477,21 @@ lan = {
         "English": "Pre-Check",
         "Chinese": "执行前确认"
     },
+    "GUI_SM_RC_action_DiagnoseEvent_MessageBox_Title": {
+        "English": "Pre-Check",
+        "Chinese": "执行前确认"
+    },
     "GUI_SM_RC_action_TooManyRowSelected_MessageBox_Text": {
         "English": "There are many selected rows. Process may occur a long period of time.\nContinue?",
         "Chinese": "选择的行数较多，执行可能需要较长时间。\n确认继续？"
+    },
+    "GUI_SM_RC_action_DiagnoseEvent_MessageBox_Text": {
+        "English": "Following Events can not be found in Wwise.\nSkip these and Continue?\n\n",
+        "Chinese": "下列Event在Wwise工程里找不到。\n跳过这些，只诊断其他能找到的？\n\n"
+    },
+    "GUI_SM_RC_action_DiagnoseEvent_MessageBox_Text_B": {
+        "English": "\n\n------------------\n\nValid Events:\n\n",
+        "Chinese": "\n\n------------------\n\n找到的Events:\n\n"
     },
     "GUI_SM_RC_action_LocateWAVFolder": {
         "English": "Locate WAV Folder",
@@ -1777,5 +1797,65 @@ lan = {
     "GUI_LOG_Ordered_Cancel": {
         "English": "[Notice] Only 1 target column can be selected as the sorting reference!",
         "Chinese": "[提示] 作为排序参考系的列必须是某1行！"
+    },
+    "GUI_LOG_DiagnoseEvent_MoreThanOneSelected": {
+        "English": "[Notice] Multiple Events have been selected: \n",
+        "Chinese": "[提示] 多个Event被选中：\n"
+    },
+    "GUI_LOG_DiagnoseEvent_Report": {
+        "English": "\n[Done] Event diagnosis complete, please comprehensively refer to the diagnostic results ^_^",
+        "Chinese": "\n[完成] Event诊断结束，请综合参考诊断结果 ^_^"
+    },
+    "GUI_LOG_DiagnoseEvent_ifEmpty": {
+        "English": "\n[Warning] Detected that the current Event is empty!",
+        "Chinese": "\n[警告]检测到当前Event是空的！"
+    },
+    "GUI_LOG_DiagnoseEvent_ifBeenAssignedToBank": {
+        "English": "\n[Warning] Detected that the current Event is not assigned to any Bank!",
+        "Chinese": "\n[警告]检测到当前Event并未指派到任何Bank！"
+    },
+    "GUI_LOG_DiagnoseEvent_ifAssignedToMultiBank": {
+        "English": "\n[Notice] Detected that the current Event is assigned to multiple Banks:",
+        "Chinese": "\n[提示]检测到当前Event被指派到多个Bank："
+    },
+    "GUI_LOG_DiagnoseEvent_ifBankBeenModified": {
+        "English": "\n[Notice] Detected \"non-default values\" in the following Banks:",
+        "Chinese": "\n[提示]检测出下列Bank中存在“非默认值”："
+    },
+    "GUI_LOG_DiagnoseEvent_ifMultiAction": {
+        "English": "\n[Notice] Detected that the current Event contains multiple Action objects. It is recommended to confirm with the program whether the calling method follows GameObject-based logic, otherwise please try to include only one Action object in an Event:",
+        "Chinese": "\n[提示]检测到当前Event中包含多个Action对象。建议与程序确认调用方式是否遵从基于GameObject的逻辑，否则请尽可能让一个Event中仅包含一个Action对象："
+    },
+    "GUI_LOG_DiagnoseEvent_ifMultiActionType": {
+        "English": "\n[Notice] Detected that the current Event contains multiple Action types. It is recommended to further confirm whether the selection of each Action type is appropriate:",
+        "Chinese": "\n[提示]检测到当前Event中包含多个Action类型，建议进一步确认每一个Action类型的选择是否得当："
+    },
+    "GUI_LOG_DiagnoseEvent_ifSpecialActionType": {
+        "English": "\n[Notice] Detected non-Play, non-Stop Action types:",
+        "Chinese": "\n[提示]检测到非Play、Stop类型的Action："
+    },
+    "GUI_LOG_DiagnoseEvent_ifActionSelfParadox": {
+        "English": "\n[Warning] Detected instances of \"the same ObjectRef assigned to different Actions multiple times\" in the current Event. Please immediately confirm if there are redundancies or if the order of Actions is self-contradictory!",
+        "Chinese": "\n[警告]检测到当前Event中存在“同一个ObjectRef多次指派到不同的Action”的情况。请立即确认是否冗余、或Action的先后顺序是否自相矛盾！"
+    },
+    "GUI_LOG_DiagnoseEvent_ifChildrenBeenModified": {
+        "English": "\n[Notice] Detected that the Action and ObjectRef object properties associated with the current Event have some custom settings in themselves, their parent objects, or child objects. Please carefully confirm that each custom setting is correct:",
+        "Chinese": "\n[提示]检测到当前Event关联的Action和ObjectRef对象属性，自身、父对象或子对象中存在一些自定义设置。请仔细确认每一个自定义设置是否正确："
+    },
+    "GUI_LOG_DiagnoseEvent_ifChildrenBeenModified_BUS": {
+        "English": "\n[Notice] Detected some custom settings in the Bus objects assigned to the ObjectRef associated with the current Event:",
+        "Chinese": "\n[提示]检测到当前Event所关联ObjectRef上指派的Bus对象中存在一些自定义设置："
+    },
+    "GUI_LOG_DiagnoseEvent_ifBeenRemoteAffected_ByActions": {
+        "English": "\n[Notice] Detected that the ObjectRef associated with the current Event has other Action assignments in other Events (or internally). Please further confirm if the assignment relationships are normal:",
+        "Chinese": "\n[提示]检测到当前Event关联的ObjectRef，在其他Event中（或自己内部）还存在其他的Action指派。请进一步确认指派关系是否正常："
+    },
+    "GUI_LOG_DiagnoseEvent_ifBeenRemoteAffected_ByVariables": {
+        "English": "\n[Notice] Detected that the ObjectRef associated with the current Event (or its parent or child objects) is under the parameter control of Switch, State, or RTPC. Please further confirm if the parameter settings are normal:",
+        "Chinese": "\n[提示]检测到当前Event关联的ObjectRef（或其父对象或子对象）处于Switch、State、RTPC的传参控制。请进一步确认传参设置是否正常："
+    },
+    "GUI_LOG_DiagnoseEvent_Start": {
+        "English": "\n[READY] Diagnose Event --> ",
+        "Chinese": "\n[开始] 诊断Event --> "
     }
 }

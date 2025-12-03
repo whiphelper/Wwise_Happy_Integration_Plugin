@@ -9,7 +9,7 @@ import uuid
 import warnings
 from datetime import datetime
 import re
-
+import xmltojson
 import psutil
 import winreg
 from past.types import basestring
@@ -61,6 +61,14 @@ def SaveJson(JsonDict, filePath):  # 将Json Dict保存到指定路径的.json�
     except:
         LOG.error(lan["GUIText_SaveJsonFailed_General"][L])
         return False
+
+
+def XML_To_JSON(wwuPath, outputFilePath):
+    with open(wwuPath, "r", encoding="utf-8") as f:
+        my_xml = f.read()
+    dictJson = xmltojson.parse(my_xml)
+    finalJson = json.loads(dictJson)
+    SaveJson(finalJson, outputFilePath)
 
 
 def getCurrentTimeStr():  # 获取当前系统时间。输出为“年月日_时分秒”
@@ -755,7 +763,7 @@ def Get_EventInfos_FromAllEventWWUs(EventWWUFolderPath):  # 全量分析Event（
 
 def Get_AllWAVPath_From_EventName(EventStr, WwiseProjectFolderPath):  # 通过Event名获取相关WAV路径（相同ObjectRef合并，不关注Action层级）
     EventWWUFolderPath = os.path.join(WwiseProjectFolderPath, "Events")
-    ActorWWUFolderPath = os.path.join(WwiseProjectFolderPath, "Actor-Mixer Hierarchy")
+    ActorWWUFolderPath = os.path.join(WwiseProjectFolderPath, global_actorString)
 
     # 遍历，定位EventName区域
     ObjectRefList = []
@@ -803,7 +811,7 @@ def Get_AllWAVPath_From_EventName(EventStr, WwiseProjectFolderPath):  # 通过Ev
 
 def Get_AllWAVPath_From_EventName_InActionLayer(EventStr, WwiseProjectFolderPath):  # 通过Event名获取相关WAV路径（关注Action层级，保留可能平级复用的相同ObjectRef）
     EventWWUFolderPath = os.path.join(WwiseProjectFolderPath, "Events")
-    ActorWWUFolderPath = os.path.join(WwiseProjectFolderPath, "Actor-Mixer Hierarchy")
+    ActorWWUFolderPath = os.path.join(WwiseProjectFolderPath, global_actorString)
 
     EventRootCups = {}
     for wwuPath in getWWUPathFromLocal(EventWWUFolderPath):
@@ -1252,7 +1260,7 @@ def getAllRTPCNamesFromRTPCWWU():
 
 def getSchemaVersionFromBusWWU():
     SchemaVersion = ""
-    tree = ET.parse(global_curWwisePath + "\\Master-Mixer Hierarchy\\Default Work Unit.wwu")
+    tree = ET.parse(global_curWwisePath + "\\SoundBanks\\Default Work Unit.wwu")
     root = tree.getroot()
 
     for item in root.iter("WwiseDocument"):
@@ -1275,7 +1283,7 @@ def ifWwiseVersionIsHigherThan2022():
 
 def getAllRTPCObjectRefNamesFromBUSWWU():
     AllRTPCObjectRefNames = []
-    for wwuPath in getWWUPathFromLocal(global_curWwisePath + "\\Master-Mixer Hierarchy"):
+    for wwuPath in getWWUPathFromLocal(global_curWwisePath + "\\" + global_busString):
         tree = ET.parse(wwuPath)
         root = tree.getroot()
 
@@ -1399,7 +1407,7 @@ def FormatRuleCheck():
 
     # 遍历所有的AudioWWU，检查是否有不符合格式规则的Event
     invalidObjectRefGUIDPool = []
-    for wwuPath in getWWUPathFromLocal(global_curWwisePath + "\\Actor-Mixer Hierarchy\\"):
+    for wwuPath in getWWUPathFromLocal(global_curWwisePath + "\\" + global_actorString + "\\"):
         R = getXmlData(wwuPath)
         for x in R:
             if x[1] != 6 and len(x[3]) == 3 and list(x[3])[2] == "ShortID" and len(list(x[3].values())[0]) != 0 and x[3]["ID"] in allObjectRefGUIDPool:
@@ -1420,7 +1428,7 @@ def FormatRuleCheck():
 
 def getWAVPathFromAudioWWU():
     WAVPathCups = []
-    for wwuPath in getWWUPathFromLocal(global_curWwisePath + "\\Actor-Mixer Hierarchy\\"):
+    for wwuPath in getWWUPathFromLocal(global_curWwisePath + "\\" + global_actorString + "\\"):
         tree = ET.parse(wwuPath)
         root = tree.getroot()
 
@@ -1557,7 +1565,7 @@ def Get_WwiseBus_From_Json(busDict):
     resultList = get_paths(busDict)
     if len(resultList) != 0:
         for i in resultList:
-            finalPathList.append("\\Master-Mixer Hierarchy\\Default Work Unit\\" + i)
+            finalPathList.append("\\" + global_busString + "\\Default Work Unit\\" + i)
     return finalPathList
 
 
@@ -1616,3 +1624,108 @@ def sort_dict_by_integer_keys(input_dict):
     sorted_dictt = {str(keey): input_dict[keey] for keey in sorted_keys}
 
     return sorted_dictt
+
+
+def process_object_ref_path(object_ref_path):
+    result = []
+    current_path = []
+
+    for i, item in enumerate(object_ref_path):
+        current_path.append(item)
+
+        if item[0] == "ChildrenList":
+            if i + 1 < len(object_ref_path):  # 确保有下一个元素
+                new_path = current_path.copy()
+                new_path.append(object_ref_path[i + 1])
+                result.append(new_path)
+
+    return result
+
+
+def find_value_and_path(wwuPaths, target_type, target_value):
+    tree = ET.parse(wwuPaths)
+    root = tree.getroot()
+    result = []
+    listXX = []
+
+    def dfs(element, path):
+        nonlocal result, listXX
+
+        # 检查当前元素的值是否为目标值
+        if target_type in ["Name", "ID", "Type", "ShortID", "WorkUnitID", "Value"]:
+            if element.attrib.get(target_type) == target_value:
+                result = [element.tag, element.attrib.get('Name', '')]
+                listXX = path + [result]
+                return True
+
+        # 递归遍历子元素
+        for child in element:
+            current_path = path + [[element.tag, element.attrib.get('Name', '')]]
+            if dfs(child, current_path):
+                return True
+
+        return False
+
+    dfs(root, [])
+    return listXX
+
+
+def find_element(element, listX, level=0):
+    if level < len(listX):
+        if listX[level][0] == element.tag and listX[level][1] == element.attrib.get("Name", "@#$"):
+            global_RootLayerList.append(element)
+        for child in element:
+            find_element(child, listX, level + 1)
+
+
+def merge_children(children):
+    result = []
+    stack = []
+
+    for child in children:
+        while stack and not child['path'].startswith(stack[-1]['path']):
+            stack.pop()
+
+        if stack:
+            if 'Children' not in stack[-1]:
+                stack[-1]['Children'] = []
+            stack[-1]['Children'].append(child)
+        else:
+            result.append(child)
+
+        stack.append(child)
+
+    return result
+
+
+def find_duplicates(input_list):
+    # 使用字典来统计每个元素出现的次数
+    count_dict = {}
+    for item in input_list:
+        if item in count_dict:
+            count_dict[item] += 1
+        else:
+            count_dict[item] = 1
+
+    # 创建一个新列表来存储重复的元素
+    duplicates = [item for item, count in count_dict.items() if count > 1]
+
+    return duplicates
+
+
+def merge_identical_dicts(dict_list):
+    # 创建一个空集合来存储唯一的字典
+    unique_dicts = set()
+
+    # 遍历原始列表中的每个字典
+    for d in dict_list:
+        # 将字典转换为JSON字符串
+        dict_as_string = json.dumps(d, sort_keys=True)
+
+        # 将JSON字符串添加到唯一集合中
+        unique_dicts.add(dict_as_string)
+
+    # 将唯一的JSON字符串转换回字典
+    result = [json.loads(s) for s in unique_dicts]
+
+    return result

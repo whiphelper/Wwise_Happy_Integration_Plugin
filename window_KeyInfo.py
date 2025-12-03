@@ -562,7 +562,7 @@ class Window_KeyInfo(QWidget):
                                 "Path_InWwise_UserDefinedTemplate": "",
                                 "Path_File_PlaceholderWAV": global_wavSilencePath,
                                 "Path_Folder_TargetWAV": "Originals\\SFX\\",
-                                "Path_InWwise_TargetActorMixer": "\\Actor-Mixer Hierarchy\\Audio_" + newKeyStr + "\\" + newKeyStr,
+                                "Path_InWwise_TargetActorMixer": "\\" + global_actorString + "\\Audio_" + newKeyStr + "\\" + newKeyStr,
                                 "Path_InWwise_TargetEvent": "\\Events\\Event_" + newKeyStr,
                                 "Path_InWwise_TargetBank": "\\SoundBanks\\Bank_" + newKeyStr + "\\Bank_" + newKeyStr,
                                 "Property_Conversion": "",
@@ -621,7 +621,7 @@ class Window_KeyInfo(QWidget):
                                 KeyInfoDict["Data_KeyInfo"][newKeyStr] = KeyInfoDict["Data_KeyInfo"][selectedKeyStr].copy()
 
                                 # 将3个wwu路径替换为新的目标路径
-                                KeyInfoDict["Data_KeyInfo"][newKeyStr]["Path_InWwise_TargetActorMixer"] = "\\Actor-Mixer Hierarchy\\Audio_" + newKeyStr + "\\" + newKeyStr
+                                KeyInfoDict["Data_KeyInfo"][newKeyStr]["Path_InWwise_TargetActorMixer"] = "\\" + global_actorString + "\\Audio_" + newKeyStr + "\\" + newKeyStr
                                 KeyInfoDict["Data_KeyInfo"][newKeyStr]["Path_InWwise_TargetEvent"] = "\\Events\\Event_" + newKeyStr
                                 KeyInfoDict["Data_KeyInfo"][newKeyStr]["Path_InWwise_TargetBank"] = "\\SoundBanks\\Bank_" + newKeyStr + "\\Bank_" + newKeyStr
 

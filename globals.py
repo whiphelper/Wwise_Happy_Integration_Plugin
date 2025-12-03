@@ -299,6 +299,7 @@ LoadFlag = False
 SafetyCheckLog = []
 ColorGUIDPool = []
 global_LanFolderInfoList = []
+global_RootLayerList = []
 SoundListDict = {}
 KeyInfoDict = {}
 LocalInfoDict = {}
@@ -309,6 +310,144 @@ global_debugLogPath = ""
 LaunchTip_Title = "安全提示/Safety Tip"
 LaunchTip_Text_NoWwise = "未检测到运行中的Wwise工程！\n\n请确保 有且仅有1个 Wwise工程在运行时，再尝试启动。\n\n\nWwise session is not running!\n\nPlease make sure there is ONLY ONE Wwise session running, then try to launch again."
 LaunchTip_Text_MultiWwise = "检测到多个Wwise在运行！\n\n为了确保执行的安全性、避免混淆，请确保 有且仅有1个 Wwise工程在运行时，再尝试启动。\n\n\nMultiple Wwise running sessions have been detected!\n\nIn order to ensure safe execution and avoid confusion, please launch when there is ONLY ONE Wwise session running."
+global_DiagnoseEvent_EventStructure = {
+    "ifBeenAssignedToBank": {"Bool": "", "Items": []},  # 是否有所属的Bank指派
+    "ifMultiAction": {"Bool": "", "Items": []},  # 是否包含多个Action
+    "ifMultiType": {"Bool": "", "Items": []},  # 是否存在多个ActionType
+    "ifSelfParadox": {"Bool": "", "Items": []},  # 是否存在自相矛盾的Action
+    "ifBeenRemoteAffected_ByActions": {"Bool": "", "Items": []},  # 是否受到其他Event中Action的影响（全局总计）（例如：Stop或Break对Play的遥控、Resume对Pause的遥控）
+    "ifBeenRemoteAffected_ByVariables": {"Bool": "", "Items": []},  # 是否受到任何变量的动态传参影响（全局总计）（例如：Switch、State、RTPC、Meter等对Property的遥控，或VoiceLimit、Threshold等其他类型）
+    "EstimateTotalLoudnessRange": [],  # 响度值区间
+    "ActionList": {}
+}
+
+global_DiagnoseEvent_ActionStructure = {
+    "ifModified": {"Bool": "", "Property": []},  # 是否存在非默认值（Action框架）
+    "ifBeenRemoteAffected": {"Bool": "", "Items": []},  # 是否受到其他Event中Action的影响（局部统计）（例如：Stop或Break对Play的遥控、Resume对Pause的遥控）
+    "-------": "-------",
+    "Type": "",
+    "ObjectRef": {
+        "ifModified": {"Bool": "", "Property": [], "Reference": []},  # 是否存在非默认值（ObjectRef框架）
+        "ifBeenRemoteAffected": {"Bool": "", "Items": []},  # 是否受到任何变量的动态传参影响（局部统计）（例如：Switch、State、RTPC、Meter等对Property的遥控，或VoiceLimit、Threshold等其他类型）
+        "-------": "-------",
+        "Name": "",
+        "Path": "",
+        "ID": "",
+        "Type": "",
+        "ActorWWU": {"Path": "", "ID": ""},
+        "Parents": [],
+        "Children": []
+    }
+}
+
+global_DiagnoseEvent_Sub_ObjectRefStructure = {
+    "ifModified": {"Bool": "", "Property": [], "Reference": []},  # 是否存在非默认值（ObjectRef框架）
+    "ifBeenRemoteAffected": {"Bool": "", "Items": []},  # 是否受到任何变量的动态传参影响（局部统计）（例如：Switch、State、RTPC、Meter等对Property的遥控，或VoiceLimit、Threshold等其他类型）
+    "-------": "---------------------------------------",
+    "Name": "",
+    "Path": "",
+    "ID": "",
+    "Type": "",
+    "ActorWWUInfo": {"Path": "", "ID": ""}
+}
+
+global_DiagnoseEvent_PropertyStructure = {
+    "Name": "",
+    "Type": "",
+    "Value": ""
+}
+
+global_DiagnoseEvent_ReferenceStructure = {
+    "Name": "",
+    "ObjectRef": "",
+    "ID": "",
+    "WorkUnitID": ""
+}
+
+global_OverrideKeywordDict = {
+    "OverrideOutput": "OverrideOutput",
+    "OutputBus": "OverrideOutput",
+    "OutputBusVolume": "OverrideOutput",
+    "OutputBusLowpass": "OverrideOutput",
+    "OutputBusHighpass": "OverrideOutput",
+
+    "OverrideGameAuxSends": "OverrideGameAuxSends",
+    "UseGameAuxSends": "OverrideGameAuxSends",
+    "GameAuxSendVolume": "OverrideGameAuxSends",
+
+    "OverrideUserAuxSends": "OverrideUserAuxSends",
+    "UserAuxSend0": "OverrideUserAuxSends",
+    "UserAuxSend1": "OverrideUserAuxSends",
+    "UserAuxSend2": "OverrideUserAuxSends",
+    "UserAuxSend3": "OverrideUserAuxSends",
+    "UserAuxSendVolume0": "OverrideUserAuxSends",
+    "UserAuxSendVolume1": "OverrideUserAuxSends",
+    "UserAuxSendVolume2": "OverrideUserAuxSends",
+    "UserAuxSendVolume3": "OverrideUserAuxSends",
+
+    "OverrideEarlyReflections": "OverrideEarlyReflections",
+    "ReflectionsAuxSend": "OverrideEarlyReflections",
+    "ReflectionsVolume": "OverrideEarlyReflections",
+
+    "OverrideConversion": "OverrideConversion",
+    "Conversion": "OverrideConversion",
+
+    "OverrideAnalysis": "OverrideAnalysis",
+    "EnableLoudnessNormalization": "OverrideAnalysis",
+
+    "OverrideEffect": "OverrideEffect",
+    "Effect0": "OverrideEffect",
+    "Effect1": "OverrideEffect",
+    "Effect2": "OverrideEffect",
+    "Effect3": "OverrideEffect",
+    "BypassEffect": "OverrideEffect",
+
+    "OverridePositioning": "OverridePositioning",
+    "CenterPercentage": "OverridePositioning",
+    "SpeakerPanning": "OverridePositioning",
+    "3DSpatialization": "OverridePositioning",
+    "SpeakerPanning3DSpatializationMix": "OverridePositioning",
+    "EnableAttenuation": "OverridePositioning",
+    "Attenuation": "OverridePositioning",
+    "3DPosition": "OverridePositioning",
+    "HoldEmitterPositionOrientation": "OverridePositioning",
+    "EnableDiffraction": "OverridePositioning",
+    "HoldListenerOrientation": "OverridePositioning",
+
+    "OverrideHdrEnvelope": "OverrideHdrEnvelope",
+    "HdrEnableEnvelope": "OverrideHdrEnvelope",
+    "HdrEnvelopeSensitivity": "OverrideHdrEnvelope",
+    "HdrActiveRange": "OverrideHdrEnvelope",
+
+    "IgnoreParentMaxSoundInstance": "IgnoreParentMaxSoundInstance",
+    "UseMaxSoundPerInstance": "IgnoreParentMaxSoundInstance",
+    "MaxSoundPerInstance": "IgnoreParentMaxSoundInstance",
+    "IsGlobalLimit": "IgnoreParentMaxSoundInstance",
+    "OverLimitBehavior": "IgnoreParentMaxSoundInstance",
+    "MaxReachedBehavior": "IgnoreParentMaxSoundInstance",
+
+    "OverrideVirtualVoice": "OverrideVirtualVoice",
+    "BelowThresholdBehavior": "OverrideVirtualVoice",
+    "VirtualVoiceQueueBehavior": "OverrideVirtualVoice",
+
+    "OverridePriority": "OverridePriority",
+    "Priority": "OverridePriority",
+    "PriorityDistanceFactor": "OverridePriority",
+    "PriorityDistanceOffset": "OverridePriority"
+}
+
+
+def getSchemaVersionFromBusWWU():
+    SchemaVersion = ""
+    tree = et.parse(global_curWwisePath + "\\SoundBanks\\Default Work Unit.wwu")
+    root = tree.getroot()
+
+    for item in root.iter("WwiseDocument"):
+        if len(item.attrib.get("SchemaVersion")) != 0:
+            SchemaVersion = item.attrib.get("SchemaVersion")
+
+    return SchemaVersion
+
 
 wwiseProcessCount = check_process_count("Wwise.exe")
 if wwiseProcessCount == 1:
@@ -334,16 +473,40 @@ if wwiseProcessCount == 1:
             global_curWwiseInfoJson = global_curWwisePath + "\\info.json"
             global_curWwiseBaseJson = global_curWwisePath + "\\base.json"
             global_curWwiseLocalJson = global_curWwisePath + "\\local.json"
-            global_actorPath = global_curWwisePath + "\\Actor-Mixer Hierarchy\\"
+
+            # 先判断schemaversion是否为2025以上版本，需要先明确buss和actormixer的字符串
+            schemaVersionFlag = False
+
+            curSchemaVersion = getSchemaVersionFromBusWWU()
+            if curSchemaVersion is not None:
+                if len(curSchemaVersion) == 0:
+                    pass
+                else:
+                    if int(curSchemaVersion) >= 133:
+                        schemaVersionFlag = True
+
+            if schemaVersionFlag is True:
+                global_actorPath = global_curWwisePath + "\\Containers\\"
+                global_busPath = global_curWwisePath + "\\Busses\\"
+                global_actorString = "Containers"
+                global_busString = "Busses"
+                global_RootBusString = "Main Audio Bus"
+            else:
+                global_actorPath = global_curWwisePath + "\\Actor-Mixer Hierarchy\\"
+                global_busPath = global_curWwisePath + "\\Master-Mixer Hierarchy\\"
+                global_actorString = "Actor-Mixer Hierarchy"
+                global_busString = "Master-Mixer Hierarchy"
+                global_RootBusString = "Master Audio Bus"
+
             global_eventPath = global_curWwisePath + "\\Events\\"
             global_banksPath = global_curWwisePath + "\\SoundBanks\\"
             global_switchPath = global_curWwisePath + "\\Switches\\"
             global_statePath = global_curWwisePath + "\\States\\"
             global_rtpcPath = global_curWwisePath + "\\Game Parameters\\"
-            global_busPath = global_curWwisePath + "\\Master-Mixer Hierarchy\\"
             global_conversionPath = global_curWwisePath + "\\Conversion Settings\\"
             global_attenuationPath = global_curWwisePath + "\\Attenuations\\"
             global_interactivemusicPath = global_curWwisePath + "\\Interactive Music Hierarchy\\"
+            global_OriginalsPath = global_curWwisePath + "\\Originals\\"
             global_sfxPath = global_curWwisePath + "\\Originals\\SFX\\"
             global_voicePath = global_curWwisePath + "\\Originals\\Voices\\"
             global_LanFolderInfoList = list_top_level_folders_with_paths(global_voicePath)
@@ -415,7 +578,7 @@ if wwiseProcessCount == 1:
                         "SoundBankGenerateEstimatedDuration": "True"
                     },
                     "Init_BUS": {
-                        "Master Audio Bus": {
+                        global_RootBusString: {
                             "SFX": {
                                 "Action": {
                                     "PC": "",

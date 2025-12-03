@@ -512,7 +512,7 @@ class Thread_GlobalMissingWAVRelink(QThread):
 
     def run(self):
         SFXFolderPath = self.WwiseCurrentProjectPath + "\\Originals\\SFX\\"
-        ActorMixerWwuRootPath = self.WwiseCurrentProjectPath + "\\Actor-Mixer Hierarchy"
+        ActorMixerWwuRootPath = self.WwiseCurrentProjectPath + "\\" + global_actorString
         wwuPathList = find_targetType_files(ActorMixerWwuRootPath, "wwu")
         if len(wwuPathList) != 0:
             count_missing = []
@@ -769,6 +769,7 @@ class Window_Main(QMainWindow):
         self.action_ShowHide_Console = self.ui.action_ShowHide_Console
         self.action_ShowHide_Waveform = self.ui.action_ShowHide_Waveform
         self.action_ShowHide_Preference = self.ui.action_ShowHide_Preference
+        self.action_ShowHide_SearchText = self.ui.action_ShowHide_SearchText
 
         # ------------------------------------------------------------------- Init Menu ----- Edit
         self.menu_Edit = self.ui.menu_Edit
@@ -818,6 +819,12 @@ class Window_Main(QMainWindow):
 
         # ------------------------------------------------------------------- Init Panel ----- Table
         self.tableWidget_SoundSheet = self.ui.tableWidget_SoundSheet
+
+        # ------------------------------------------------------------------- Init Panel ----- lineEdit_SearchText
+        self.Frame_SearchText = self.ui.Frame_SearchText
+        self.lineEdit_SearchText = self.ui.lineEdit_SearchText
+        self.pushButton_up = self.ui.pushButton_up
+        self.pushButton_down = self.ui.pushButton_down
 
         # ------------------------------------------------------------------- Init Panel ----- Log Console
         self.textEdit_Log = self.ui.textEdit_Log
@@ -876,9 +883,9 @@ class Window_Main(QMainWindow):
         self.verticalLayout_2by2 = self.ui.verticalLayout_2by2
         self.splitter = QSplitter(Qt.Vertical)
         self.splitter.addWidget(self.tableWidget_SoundSheet)
+        self.splitter.addWidget(self.Frame_SearchText)
         self.splitter.addWidget(self.textEdit_Log)
         self.splitter.setStretchFactor(0, 2)
-        self.splitter.setStretchFactor(1, 1)
         self.verticalLayout_2by2.addWidget(self.splitter)
 
         # ------------------------------------------------------------------- Set Logic ----- Window Stuck
@@ -897,6 +904,7 @@ class Window_Main(QMainWindow):
         self.action_TransferXlsxIntoJson.triggered.connect(self.Action_TransferXlsxIntoJson)
         self.action_ShowHide_Filter.triggered.connect(lambda: self.ShowHidePanel(self.Frame_Filter))
         self.action_ShowHide_NamingArea.triggered.connect(self.ShowHideColumn)
+        self.action_ShowHide_SearchText.triggered.connect(lambda: self.ShowHidePanel(self.Frame_SearchText))
         self.action_ShowHide_Console.triggered.connect(lambda: self.ShowHidePanel(self.textEdit_Log))
         self.action_ShowHide_Waveform.triggered.connect(lambda: self.ShowHidePanel(self.Frame_AdvInfo))
         self.action_ShowHide_Preference.triggered.connect(lambda: self.ShowHidePanel(self.groupBox_Preference))
@@ -916,6 +924,7 @@ class Window_Main(QMainWindow):
         self.action_ShowHide_Console.setText(lan["GUI_action_ShowHide_Console"][L])
         self.action_ShowHide_Waveform.setText(lan["GUI_action_ShowHide_Waveform"][L])
         self.action_ShowHide_Preference.setText(lan["GUI_action_ShowHide_Preference"][L])
+        self.action_ShowHide_SearchText.setText(lan["GUI_action_ShowHide_SearchText"][L])
 
         # ------------------------------------------------------------------- Set Logic ----- Menu ----- Edit
         self.action_Undo.triggered.connect(self.Action_Undo)
@@ -1023,6 +1032,14 @@ class Window_Main(QMainWindow):
         self.tableWidget_SoundSheet.itemSelectionChanged.connect(self.Action_AfterItemSelectionChanged)
         self.tableWidget_SoundSheet_Order = Qt.DescendingOrder
 
+        # ------------------------------------------------------------------- Set Logic ----- Panel ----- lineEdit_SearchText
+        self.Frame_SearchText.setVisible(True)
+        self.pushButton_up.setVisible(False)
+        self.pushButton_down.setVisible(False)
+        self.lineEdit_SearchText.textChanged.connect(self.LineEditTextChanged_SearchText)
+        self.pushButton_up.clicked.connect(self.find_previous)
+        self.pushButton_down.clicked.connect(self.find_next)
+
         # ------------------------------------------------------------------- Set Logic ----- Panel ----- Log Console
         self.textEdit_Log.setContextMenuPolicy(Qt.CustomContextMenu)
         self.textEdit_Log.customContextMenuRequested.connect(self.RightClickMenu_textEdit_Log)
@@ -1114,6 +1131,9 @@ class Window_Main(QMainWindow):
         self.action_ShowHide_Console.setShortcut(QKeySequence(key["ShortCut_action_ShowHide_Console"]))
         self.action_ShowHide_Waveform.setShortcut(QKeySequence(key["ShortCut_action_ShowHide_Waveform"]))
         self.action_ShowHide_Preference.setShortcut(QKeySequence(key["ShortCut_action_ShowHide_Preference"]))
+        self.action_ShowHide_SearchText.setShortcut(QKeySequence(key["ShortCut_action_ShowHide_SearchText"]))
+        self.pushButton_up.setShortcut(QKeySequence(key["ShortCut_action_SearchText_Up"]))
+        self.pushButton_down.setShortcut(QKeySequence(key["ShortCut_action_SearchText_Down"]))
         self.action_Undo.setShortcut(QKeySequence(key["ShortCut_action_Undo"]))
         self.action_Redo.setShortcut(QKeySequence(key["ShortCut_action_Redo"]))
         self.action_AddLine.setShortcut(QKeySequence(key["ShortCut_action_AddLine"]))
@@ -3912,6 +3932,10 @@ class Window_Main(QMainWindow):
         Menu.addAction(action_AnalyseEvent)
         action_AnalyseEvent.triggered.connect(self.AnalyseEvent)
 
+        action_DiagnoseEvent = QAction(lan["GUI_SM_RC_action_DiagnoseEvent"][L], self)
+        Menu.addAction(action_DiagnoseEvent)
+        action_DiagnoseEvent.triggered.connect(self.DiagnoseEvent)
+
         Menu.addSeparator()
 
         action_RefreshNoteForEvent = QAction(lan["GUI_SM_RC_action_RenewNotesForEvents"][L], self)
@@ -4029,6 +4053,49 @@ class Window_Main(QMainWindow):
                                 for actionObj, wavList in zip(EventInfoDict.keys(), EventInfoDict.values()):
                                     self.comboBox_EventObjectRef.addItem(actionObj)
                     go.__del__()
+        except:
+            traceback.print_exc()
+
+    def DiagnoseEvent(self):
+        try:
+            rowList = self.GetSelectedRows()
+            # 先逐个检查选中的Events是否都存在，将确定存在的整理到新的List中
+            ValidEventList = []
+            InvalidEventList = []
+            if len(rowList) != 0:
+                go = SimpleWaapi()
+                for i in rowList:
+                    eventText = self.tableWidget_SoundSheet.item(i, key["Header_EventName"]).text()
+                    if len(eventText) == 0:
+                        pass
+                    else:
+                        eventGUID = go.get_EventGUID_From_EventName(eventText)
+                        if eventGUID is None:
+                            InvalidEventList.append(eventText)
+                        else:
+                            ValidEventList.append(eventText)
+
+            # 如果发现不存在的，提示用户是否进一步检查
+            if len(InvalidEventList) != 0:
+                messageBox = QMessageBox(QMessageBox.Warning,
+                                         lan["GUI_SM_RC_action_DiagnoseEvent_MessageBox_Title"][L],
+                                         lan["GUI_SM_RC_action_DiagnoseEvent_MessageBox_Text"][L] + str(InvalidEventList) + lan["GUI_SM_RC_action_DiagnoseEvent_MessageBox_Text_B"][L] + str(ValidEventList))
+                messageBox.setFont(QFont(self.GetDefaultFont(), key["DefaultFont_Size"]))
+                Qyes = messageBox.addButton(self.tr(lan["GUI_SafetyAlert_READY"][L]), QMessageBox.YesRole)
+                Qno = messageBox.addButton(self.tr(lan["GUI_SafetyAlert_CANCEL"][L]), QMessageBox.NoRole)
+                messageBox.exec_()
+                if messageBox.clickedButton() == Qyes:
+                    if len(ValidEventList) != 0:
+                        LOG.info(lan["GUI_LOG_DiagnoseEvent_Start"][L] + str(ValidEventList))
+                        for eventStr in ValidEventList:
+                            go.print_UltraInfoOfEvent(eventStr)
+            else:
+                if len(ValidEventList) != 0:
+                    LOG.info(lan["GUI_LOG_DiagnoseEvent_Start"][L] + str(ValidEventList))
+                    for eventStr in ValidEventList:
+                        go.print_UltraInfoOfEvent(eventStr)
+
+
         except:
             traceback.print_exc()
 
@@ -4329,6 +4396,36 @@ class Window_Main(QMainWindow):
                     open_file_folder_highlight(NewXLSXName)
         except:
             traceback.print_exc()
+
+    # ----------------------------------------------------------------------------- Panel Func ----- Search Text
+    def LineEditTextChanged_SearchText(self):
+        search_text = self.lineEdit_SearchText.text()
+
+        # 清除之前的高亮
+        cursor = self.textEdit_Log.textCursor()
+        cursor.select(cursor.Document)
+        formatt = QTextCharFormat()
+        formatt.setBackground(Qt.transparent)  # 将背景设置为透明
+        cursor.mergeCharFormat(formatt)
+        cursor.clearSelection()
+
+        # 设置高亮格式
+        highlight_format = QTextCharFormat()
+        highlight_format.setBackground(QColor("yellow"))
+
+        # 查找并高亮所有匹配项
+        cursor = self.textEdit_Log.document().find(search_text)
+        while not cursor.isNull() and not search_text.isspace():
+            cursor.mergeCharFormat(highlight_format)
+            cursor = self.textEdit_Log.document().find(search_text, cursor)
+
+    def find_next(self):
+        # LOG.info("NEXT~~~~~")
+        pass
+
+    def find_previous(self):
+        # LOG.info("Previous~~~~~")
+        pass
 
     # ----------------------------------------------------------------------------- Panel Func ----- Log Console
     def cleanup(self):
@@ -4946,6 +5043,7 @@ class Window_Main(QMainWindow):
                 # 提示安全检查开始
                 LOG.info(startLog)
                 self.textEdit_Log.setVisible(True)
+                self.Frame_SearchText.setVisible(True)
                 # Log.info(startLog)
 
                 # 获取全局所有ID
@@ -5126,6 +5224,7 @@ class Window_Main(QMainWindow):
             TotalColNum = len(colList)
             if TotalColNum == 1:  # 如果有选中某个特定的行
                 self.textEdit_Log.setVisible(True)
+                self.Frame_SearchText.setVisible(True)
                 col = colList[0]
                 # 根据行数排序
                 if self.tableWidget_SoundSheet_Order == Qt.DescendingOrder:
